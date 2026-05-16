@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Виселица — Профессии</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: #fff;
+        }
+        .game-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border-radius: 30px;
+            padding: 30px 20px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 25px;
+        }
+        h1 {
+            font-size: 2.2rem;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+        }
+        .gallows {
+            font-family: 'Courier New', monospace;
+            font-size: 1.4rem;
+            line-height: 1.3;
+            white-space: pre;
+            background: rgba(0,0,0,0.2);
+            padding: 15px;
+            border-radius: 20px;
+            text-align: left;
+            display: inline-block;
+        }
+        .word {
+            font-size: 2.5rem;
+            letter-spacing: 10px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .hint {
+            font-size: 1rem;
+            opacity: 0.8;
+            font-style: italic;
+        }
+        .keyboard {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            max-width: 350px;
+        }
+        .key {
+            width: 40px;
+            height: 45px;
+            border-radius: 12px;
+            border: none;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 1.3rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .key:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+        }
+        .key:disabled {
+            background: rgba(0,0,0,0.4);
+            color: #aaa;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .key.correct {
+            background: #2ecc71;
+        }
+        .key.wrong {
+            background: #e74c3c;
+        }
+        .score {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            font-size: 1.2rem;
+        }
+        .btn-new {
+            background: #f39c12;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+            transition: 0.2s;
+            letter-spacing: 1px;
+        }
+        .btn-new:hover {
+            background: #e67e22;
+            transform: scale(1.05);
+        }
+        .message {
+            font-size: 1.3rem;
+            font-weight: bold;
+            min-height: 2em;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>👻 HANGMAN</h1>
+        <div class="gallows" id="gallows"></div>
+        <div class="word" id="wordDisplay"></div>
+        <div class="hint" id="hint"></div>
+        <div class="keyboard" id="keyboard"></div>
+        <div class="message" id="message"></div>
+        <div class="score">
+            <span>🏆 <span id="wins">0</span></span>
+            <span>💀 <span id="losses">0</span></span>
+        </div>
+        <button class="btn-new" id="newGameBtn">🔄 Новая игра</button>
+    </div>
+
+    <script>
+        (function() {
+            // Слова и подсказки (профессии)
+            const words = [
+                { word: "TEACHER", hint: "Works in a school" },
+                { word: "DOCTOR", hint: "Helps sick people" },
+                { word: "FIREFIGHTER", hint: "Puts out fires" },
+                { word: "PILOT", hint: "Flies an airplane" },
+                { word: "ENGINEER", hint: "Designs and builds things" },
+                { word: "CHEF", hint: "Cooks in a restaurant" },
+                { word: "ARTIST", hint: "Creates paintings or sculptures" },
+                { word: "NURSE", hint: "Takes care of patients" }
+            ];
+
+            // Состояние игры
+            let currentWord = "";
+            let currentHint = "";
+            let guessedLetters = new Set();
+            let wrongAttempts = 0;
+            const maxAttempts = 6;
+
+            // Счетчики побед/поражений
+            let wins = 0;
+            let losses = 0;
+
+            // Элементы DOM
+            const gallowsEl = document.getElementById('gallows');
+            const wordDisplayEl = document.getElementById('wordDisplay');
+            const hintEl = document.getElementById('hint');
+            const keyboardEl = document.getElementById('keyboard');
+            const messageEl = document.getElementById('message');
+            const winsEl = document.getElementById('wins');
+            const lossesEl = document.getElementById('losses');
+            const newGameBtn = document.getElementById('newGameBtn');
+
+            // Стадии виселицы (ASCII)
+            const gallowsStages = [
+                `
+  +---+
+  |   |
+      |
+      |
+      |
+      |
+=========`,
+                `
+  +---+
+  |   |
+  O   |
+      |
+      |
+      |
+=========`,
+                `
+  +---+
+  |   |
+  O   |
+  |   |
+      |
+      |
+=========`,
+                `
+  +---+
+  |   |
+  O   |
+ /|   |
+      |
+      |
+=========`,
+                `
+  +---+
+  |   |
+  O   |
+ /|\\  |
+      |
+      |
+=========`,
+                `
+  +---+
+  |   |
+  O   |
+ /|\\  |
+ /    |
+      |
+=========`,
+                `
+  +---+
+  |   |
+  O   |
+ /|\\  |
+ / \\  |
+      |
+=========`
+            ];
+
+            // Взять случайное слово
+            function pickRandomWord() {
+                const randomIndex = Math.floor(Math.random() * words.length);
+                const { word, hint } = words[randomIndex];
+                return { word: word.toUpperCase(), hint };
+            }
+
+            // Сброс состояния для новой игры
+            function resetGame() {
+                const { word, hint } = pickRandomWord();
+                currentWord = word;
+                currentHint = hint;
+                guessedLetters.clear();
+                wrongAttempts = 0;
+                updateUI();
+                messageEl.textContent = '';
+            }
+
+            // Проверка завершения игры
+            function checkGameStatus() {
+                const wordLetters = new Set(currentWord.split(''));
+                // Если все буквы слова угаданы
+                const allGuessed = [...wordLetters].every(letter => guessedLetters.has(letter));
+                if (allGuessed) {
+                    wins++;
+                    winsEl.textContent = wins;
+                    messageEl.innerHTML = '🎉 Победа! Отличная работа!';
+                    disableAllKeys();
+                    return true;
+                }
+                if (wrongAttempts >= maxAttempts) {
+                    losses++;
+                    lossesEl.textContent = losses;
+                    messageEl.innerHTML = `😞 Вы проиграли. Слово: <strong>${currentWord}</strong>`;
+                    disableAllKeys();
+                    return true;
+                }
+                return false;
+            }
+
+            // Отключение всех клавиш при окончании игры
+            function disableAllKeys() {
+                document.querySelectorAll('.key').forEach(btn => btn.disabled = true);
+            }
+
+            // Включение всех клавиш (новые кнопки создаются заново при updateUI)
+            
+            // Обработчик нажатия буквы
+            function handleGuess(letter) {
+                if (guessedLetters.has(letter)) return; // уже нажимали
+                guessedLetters.add(letter);
+                
+                // Найти кнопку и пометить её
+                const keyBtn = document.querySelector(`.key[data-letter="${letter}"]`);
+                if (keyBtn) {
+                    if (currentWord.includes(letter)) {
+                        keyBtn.classList.add('correct');
+                    } else {
+                        keyBtn.classList.add('wrong');
+                        wrongAttempts++;
+                    }
+                    keyBtn.disabled = true;
+                }
+
+                updateUI();
+                checkGameStatus();
+            }
+
+            // Отрисовка виселицы
+            function renderGallows() {
+                gallowsEl.textContent = gallowsStages[wrongAttempts];
+            }
+
+            // Отображение слова с угаданными буквами
+            function renderWord() {
+                const display = currentWord
+                    .split('')
+                    .map(letter => guessedLetters.has(letter) ? letter : '_')
+                    .join(' ');
+                wordDisplayEl.textContent = display;
+            }
+
+            // Создание экранной клавиатуры
+            function renderKeyboard() {
+                keyboardEl.innerHTML = '';
+                const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                for (const letter of alphabet) {
+                    const btn = document.createElement('button');
+                    btn.className = 'key';
+                    btn.textContent = letter;
+                    btn.dataset.letter = letter;
+                    btn.addEventListener('click', () => handleGuess(letter));
+                    // Если буква уже угадана, применить стили
+                    if (guessedLetters.has(letter)) {
+                        btn.disabled = true;
+                        if (currentWord.includes(letter)) {
+                            btn.classList.add('correct');
+                        } else {
+                            btn.classList.add('wrong');
+                        }
+                    }
+                    keyboardEl.appendChild(btn);
+                }
+            }
+
+            // Подсказка
+            function renderHint() {
+                hintEl.textContent = `💡 ${currentHint}`;
+            }
+
+            // Обновление всего интерфейса
+            function updateUI() {
+                renderGallows();
+                renderWord();
+                renderHint();
+                renderKeyboard();
+                winsEl.textContent = wins;
+                lossesEl.textContent = losses;
+            }
+
+            // Обработчик физической клавиатуры
+            function handleKeyPress(e) {
+                // Игнорируем, если игра завершена
+                if (messageEl.textContent !== '') return;
+                const key = e.key.toUpperCase();
+                if (/^[A-Z]$/.test(key) && !guessedLetters.has(key)) {
+                    handleGuess(key);
+                }
+            }
+
+            // Новая игра по кнопке
+            newGameBtn.addEventListener('click', () => {
+                resetGame();
+                // Убираем сообщение
+                messageEl.textContent = '';
+            });
+
+            // Инициализация
+            document.addEventListener('keydown', handleKeyPress);
+            resetGame();
+        })();
+    </script>
+</body>
+</html>
