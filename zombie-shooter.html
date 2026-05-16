@@ -108,7 +108,7 @@
             width: 44px;
             height: 44px;
             z-index: 5;
-            transition: left 0.5s linear, top 0.5s linear;
+            transition: left 0.8s linear, top 0.8s linear;
         }
         .zombie-body {
             width: 100%;
@@ -339,7 +339,7 @@
         <div id="hud">
             <div class="hud-item">⚡ Волна: <span id="level-display">1</span>/<span id="total-waves">5</span></div>
             <div class="hud-item">💀 Убито: <span id="kill-count">0</span></div>
-            <div class="hud-item">🧟 Осталось: <span id="zombie-count">0</span></div>
+            <div class="hud-item">🧟 На поле: <span id="zombie-count">0</span></div>
             <div id="lives" class="hud-item">
                 <span class="heart">❤️</span>
                 <span class="heart">❤️</span>
@@ -381,79 +381,27 @@
             const TOTAL_WAVES = 5;
             const MIN_GAP = 5;
             const TOTAL_ZOMBIES = 40;
+            const MAX_ZOMBIES_ON_FIELD = 3;
+            const SPAWN_DELAY = 1500;
 
-            // ===== ГЛОБАЛЬНЫЙ ОТСЛЕЖИВАТЕЛЬ ПОЗИЦИЙ =====
-            // Хранит для каждого слова, сколько зомби назад оно появлялось
-            // Ключ: слово, значение: сколько зомби назад оно было (0 = только что)
-            let wordDistance = {};
-            
-            function initWordDistance() {
-                for (const w of wordBank) {
-                    wordDistance[w.word] = 999; // Изначально все слова "были очень давно"
-                }
-            }
-
-            // ===== ГЕНЕРАЦИЯ ОДНОГО ЗОМБИ (вместо очереди) =====
-            function pickNextWord() {
-                // Собираем всех кандидатов: каждое слово должно появиться определённое количество раз
-                // Но мы будем выбирать по одному, с учётом MIN_GAP
-                
-                // Увеличиваем расстояние для всех слов
-                for (const w of wordBank) {
-                    wordDistance[w.word]++;
-                }
-
-                // Собираем слова, которые МОЖНО использовать (расстояние >= MIN_GAP)
-                let candidates = [];
-                for (const w of wordBank) {
-                    if (wordDistance[w.word] >= MIN_GAP) {
-                        candidates.push(w.word);
-                    }
-                }
-
-                // Если кандидатов нет — берём всех (ослабляем ограничение)
-                if (candidates.length === 0) {
-                    candidates = wordBank.map(w => w.word);
-                }
-
-                // Выбираем случайного кандидата
-                const chosen = candidates[Math.floor(Math.random() * candidates.length)];
-                
-                // Сбрасываем расстояние для выбранного слова
-                wordDistance[chosen] = 0;
-
-                return chosen;
-            }
-
-            // ===== ГЕНЕРАЦИЯ ПОЛНОЙ ОЧЕРЕДИ (с учётом повторений каждого слова) =====
+            // ===== ГЕНЕРАЦИЯ ОЧЕРЕДИ =====
             function generateWordQueue() {
-                // Сколько раз должно появиться каждое слово
                 let remaining = {};
                 for (const w of wordBank) {
                     remaining[w.word] = (w.word === 'write') ? 4 : 3;
                 }
 
                 let queue = [];
-                let totalLeft = TOTAL_ZOMBIES;
+                let recentHistory = [];
 
-                // Сбрасываем расстояния
-                initWordDistance();
-
-                while (totalLeft > 0) {
-                    // Увеличиваем счётчик расстояний
-                    for (const w of wordBank) {
-                        wordDistance[w.word]++;
-                    }
-
-                    // Собираем кандидатов: слово должно ещё остаться И расстояние >= MIN_GAP
+                while (queue.length < TOTAL_ZOMBIES) {
                     let candidates = [];
                     for (const w of wordBank) {
-                        if (remaining[w.word] > 0 && wordDistance[w.word] >= MIN_GAP) {
+                        if (remaining[w.word] > 0 && !recentHistory.includes(w.word)) {
                             candidates.push(w.word);
                         }
                     }
 
-                    // Если строгих кандидатов нет — берём всех, у кого ещё есть remaining
                     if (candidates.length === 0) {
                         for (const w of wordBank) {
                             if (remaining[w.word] > 0) {
@@ -462,33 +410,27 @@
                         }
                     }
 
-                    // Если и таких нет — всё, выходим (не должно случиться)
-                    if (candidates.length === 0) break;
-
-                    // Выбираем случайного
                     const chosen = candidates[Math.floor(Math.random() * candidates.length)];
-                    
-                    // Добавляем в очередь
-                    const wordData = wordBank.find(w => w.word === chosen);
-                    queue.push({ ...wordData });
-                    
-                    // Обновляем счётчики
+                    queue.push({ ...wordBank.find(w => w.word === chosen) });
                     remaining[chosen]--;
-                    wordDistance[chosen] = 0;
-                    totalLeft--;
+
+                    recentHistory.push(chosen);
+                    if (recentHistory.length > MIN_GAP) {
+                        recentHistory.shift();
+                    }
                 }
 
                 return queue;
             }
 
-            // ===== КОНФИГУРАЦИЯ ВОЛН =====
+            // ===== КОНФИГУРАЦИЯ ВОЛН (ЗАМЕДЛЕННАЯ) =====
             function getWaveConfig(wave) {
                 const configs = [
-                    { zombies: 6, speed: 4000, step: 5 },
-                    { zombies: 7, speed: 3400, step: 7 },
-                    { zombies: 8, speed: 2800, step: 9 },
-                    { zombies: 9, speed: 2200, step: 11 },
-                    { zombies: 10, speed: 1800, step: 13 },
+                    { zombies: 6, speed: 5000, step: 3 },  // Волна 1: очень медленно
+                    { zombies: 7, speed: 4500, step: 4 },  // Волна 2
+                    { zombies: 8, speed: 4000, step: 5 },  // Волна 3
+                    { zombies: 9, speed: 3500, step: 6 },  // Волна 4
+                    { zombies: 10, speed: 3000, step: 7 }, // Волна 5: чуть быстрее, но всё ещё комфортно
                 ];
                 return configs[Math.min(wave - 1, configs.length - 1)];
             }
@@ -514,11 +456,13 @@
             let gameActive = false;
             let gameOver = false;
             let moveInterval = null;
-            let spawnTimeout = null;
-            let zombieSpeed = 4000;
-            let zombieStepSize = 5;
+            let spawnTimeoutId = null;
+            let waveTransitionTimeout = null;
+            let zombieSpeed = 5000;
+            let zombieStepSize = 3;
             let zombiesInThisWave = 0;
             let zombiesSpawned = 0;
+            let waveCompleted = false;
             let wordQueue = [];
 
             // Звуки
@@ -557,9 +501,12 @@
                 });
             }
 
-            // ===== СОЗДАНИЕ ЗОМБИ =====
-            function createZombie() {
+            // ===== ПОПЫТКА СОЗДАТЬ ЗОМБИ =====
+            function trySpawnZombie() {
                 if (!gameActive) return;
+                if (waveCompleted) return;
+                if (zombiesSpawned >= zombiesInThisWave) return;
+                if (zombies.length >= MAX_ZOMBIES_ON_FIELD) return;
                 if (wordQueue.length === 0) return;
 
                 const gameRect = gameEl.getBoundingClientRect();
@@ -608,6 +555,22 @@
                 updateProgress();
             }
 
+            // ===== ПЛАНИРОВАНИЕ СПАВНА =====
+            function scheduleSpawn() {
+                if (!gameActive) return;
+                if (waveCompleted) return;
+                if (zombiesSpawned >= zombiesInThisWave) return;
+
+                if (spawnTimeoutId) clearTimeout(spawnTimeoutId);
+
+                spawnTimeoutId = setTimeout(() => {
+                    if (gameActive && !waveCompleted) {
+                        trySpawnZombie();
+                        scheduleSpawn();
+                    }
+                }, SPAWN_DELAY);
+            }
+
             function updateZombieCount() {
                 zombieCountEl.textContent = zombies.length;
             }
@@ -637,7 +600,7 @@
                     const dist = Math.sqrt(dx * dx + dy * dy);
 
                     if (dist < 55) {
-                        killZombie(i, false);
+                        removeZombie(i);
                         loseLife();
                         continue;
                     }
@@ -651,26 +614,32 @@
                 }
             }
 
-            // ===== УБИТЬ ЗОМБИ =====
-            function killZombie(index, wasShot = true) {
+            // ===== УДАЛИТЬ ЗОМБИ =====
+            function removeZombie(index) {
+                const z = zombies[index];
+                z.el.remove();
+                zombies.splice(index, 1);
+                updateZombieCount();
+                trySpawnZombie();
+                checkWaveComplete();
+            }
+
+            // ===== УБИТЬ ЗОМБИ ВЫСТРЕЛОМ =====
+            function killZombie(index) {
                 const z = zombies[index];
                 const rect = z.el.getBoundingClientRect();
                 const gameRect = gameEl.getBoundingClientRect();
 
-                if (wasShot) {
-                    const hit = document.createElement('div');
-                    hit.className = 'hit-effect';
-                    hit.textContent = '💥';
-                    hit.style.left = (rect.left - gameRect.left) + 'px';
-                    hit.style.top = (rect.top - gameRect.top) + 'px';
-                    gameEl.appendChild(hit);
-                    setTimeout(() => hit.remove(), 500);
-                    sfxKill();
-                }
+                const hit = document.createElement('div');
+                hit.className = 'hit-effect';
+                hit.textContent = '💥';
+                hit.style.left = (rect.left - gameRect.left) + 'px';
+                hit.style.top = (rect.top - gameRect.top) + 'px';
+                gameEl.appendChild(hit);
+                setTimeout(() => hit.remove(), 500);
+                sfxKill();
 
-                z.el.remove();
-                zombies.splice(index, 1);
-                updateZombieCount();
+                removeZombie(index);
             }
 
             // ===== ПОТЕРЯ ЖИЗНИ =====
@@ -686,6 +655,18 @@
 
                 if (lives <= 0) {
                     endGame(false);
+                }
+            }
+
+            // ===== ПРОВЕРКА ЗАВЕРШЕНИЯ ВОЛНЫ =====
+            function checkWaveComplete() {
+                if (!gameActive) return;
+                if (waveCompleted) return;
+
+                if (zombiesSpawned >= zombiesInThisWave && zombies.length === 0) {
+                    waveCompleted = true;
+                    if (spawnTimeoutId) clearTimeout(spawnTimeoutId);
+                    completeWave();
                 }
             }
 
@@ -726,14 +707,10 @@
                         }
                     }
 
-                    killZombie(closestIdx, true);
+                    killZombie(closestIdx);
                     kills++;
                     killCountEl.textContent = kills;
                     updateProgress();
-
-                    if (zombies.length === 0 && zombiesSpawned >= zombiesInThisWave) {
-                        completeWave();
-                    }
                 }
 
                 wordInput.focus();
@@ -758,22 +735,15 @@
                 levelDisplay.textContent = currentWave;
                 sfxWaveComplete();
                 messageEl.textContent = `🎯 ВОЛНА ${currentWave}/${TOTAL_WAVES}!\nЗомби: ${config.zombies}`;
-                setTimeout(() => { if (gameActive) messageEl.textContent = ''; }, 2000);
 
-                setTimeout(() => {
-                    if (gameActive) spawnWave();
-                }, 2000);
-            }
-
-            function spawnWave() {
-                const config = getWaveConfig(currentWave);
-                zombiesInThisWave = config.zombies;
-
-                for (let i = 0; i < config.zombies; i++) {
-                    spawnTimeout = setTimeout(() => {
-                        if (gameActive) createZombie();
-                    }, i * 2200);
-                }
+                waveTransitionTimeout = setTimeout(() => {
+                    if (gameActive) {
+                        messageEl.textContent = '';
+                        waveCompleted = false;
+                        trySpawnZombie();
+                        scheduleSpawn();
+                    }
+                }, 2500);
             }
 
             // ===== КОНЕЦ ИГРЫ =====
@@ -781,7 +751,8 @@
                 gameActive = false;
                 gameOver = true;
                 clearInterval(moveInterval);
-                if (spawnTimeout) clearTimeout(spawnTimeout);
+                if (spawnTimeoutId) clearTimeout(spawnTimeoutId);
+                if (waveTransitionTimeout) clearTimeout(waveTransitionTimeout);
 
                 for (const z of zombies) {
                     z.el.remove();
@@ -804,11 +775,11 @@
 
             // ===== ЗАПУСК =====
             function startGame() {
-                // Генерируем очередь ОДИН раз на всю игру
                 wordQueue = generateWordQueue();
 
                 gameActive = true;
                 gameOver = false;
+                waveCompleted = false;
                 lives = 5;
                 kills = 0;
                 currentWave = 1;
@@ -838,10 +809,18 @@
                 zombies = [];
                 updateZombieCount();
 
+                if (spawnTimeoutId) clearTimeout(spawnTimeoutId);
+                if (waveTransitionTimeout) clearTimeout(waveTransitionTimeout);
                 if (moveInterval) clearInterval(moveInterval);
-                moveInterval = setInterval(moveZombies, 400);
+                moveInterval = setInterval(moveZombies, 500); // Обновление раз в 500 мс (плавнее)
 
-                spawnWave();
+                spawnTimeoutId = setTimeout(() => {
+                    if (gameActive) {
+                        trySpawnZombie();
+                        scheduleSpawn();
+                    }
+                }, 1000);
+
                 messageEl.textContent = `🎮 ВОЛНА 1/${TOTAL_WAVES}!\nВсего зомби: ${TOTAL_ZOMBIES}`;
                 setTimeout(() => { if (gameActive) messageEl.textContent = ''; }, 2500);
             }
@@ -871,10 +850,10 @@
             startGame();
             wordInput.focus();
 
-            console.log('🧟 Word Survivor v8 — ИСПРАВЛЕНО РАСПРЕДЕЛЕНИЕ');
-            console.log(`Очередь из ${TOTAL_ZOMBIES} слов генерируется ОДИН раз в startGame()`);
-            console.log('Алгоритм гарантирует MIN_GAP = 5 между одинаковыми словами');
-            console.log('Никаких перегенераций — никаких повторов на стыке!');
+            console.log('🧟 Word Survivor v12 — МЕДЛЕННЫЕ ЗОМБИ');
+            console.log('Скорости: 5000→4500→4000→3500→3000 мс/шаг');
+            console.log('Шаги: 3→4→5→6→7 px');
+            console.log('Ученик успеет подумать и написать!');
         })();
     </script>
 </body>
