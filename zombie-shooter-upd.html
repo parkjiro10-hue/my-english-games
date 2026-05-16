@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧟 Word Survivor: Zombie Shooter</title>
+    <style>
+        :root {
+            --pixel-size: 2px;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #1a1a2e;
+            font-family: 'Press Start 2P', 'Courier New', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            cursor: crosshair;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        #game {
+            position: relative;
+            width: 800px;
+            height: 600px;
+            background: linear-gradient(180deg, #16213e 0%, #0f3460 100%);
+            border: 6px solid #e94560;
+            box-shadow: 0 0 40px rgba(233, 68, 96, 0.5), inset 0 0 60px rgba(0,0,0,0.5);
+            overflow: hidden;
+            image-rendering: pixelated;
+        }
+        #player {
+            position: absolute;
+            width: 48px;
+            height: 48px;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            transition: transform 0.1s;
+        }
+        .player-body {
+            width: 100%;
+            height: 100%;
+            background: #4ecca3;
+            border: 3px solid #2a9d8f;
+            border-radius: 8px;
+            position: relative;
+            box-shadow: 0 0 15px rgba(78, 204, 163, 0.6);
+        }
+        .player-face {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            top: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .player-eye {
+            width: 6px;
+            height: 6px;
+            background: #fff;
+            border-radius: 50%;
+            position: absolute;
+            top: 5px;
+        }
+        .player-eye.left { left: 3px; }
+        .player-eye.right { right: 3px; }
+        .player-mouth {
+            width: 10px;
+            height: 4px;
+            background: #1a1a2e;
+            position: absolute;
+            bottom: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 0 0 4px 4px;
+        }
+        .player-sword {
+            position: absolute;
+            width: 32px;
+            height: 6px;
+            background: linear-gradient(90deg, #ffd700, #ffaa00);
+            top: 50%;
+            right: -20px;
+            transform: translateY(-50%) rotate(-30deg);
+            border-radius: 2px;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+        }
+        .player-sword::after {
+            content: '';
+            position: absolute;
+            right: -6px;
+            top: -3px;
+            width: 10px;
+            height: 12px;
+            background: #ffd700;
+            clip-path: polygon(0 0, 100% 50%, 0 100%);
+        }
+        .zombie {
+            position: absolute;
+            width: 44px;
+            height: 44px;
+            z-index: 5;
+            transition: left 0.8s linear, top 0.8s linear;
+        }
+        .zombie-body {
+            width: 100%;
+            height: 100%;
+            background: #6b8e23;
+            border: 3px solid #556b2f;
+            border-radius: 6px;
+            position: relative;
+            box-shadow: 0 0 10px rgba(107, 142, 35, 0.5);
+        }
+        .zombie-face {
+            position: absolute;
+            width: 18px;
+            height: 16px;
+            top: 6px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .zombie-eye {
+            width: 5px;
+            height: 5px;
+            background: #ff0000;
+            border-radius: 50%;
+            position: absolute;
+            top: 3px;
+            box-shadow: 0 0 4px #ff0000;
+        }
+        .zombie-eye.left { left: 2px; }
+        .zombie-eye.right { right: 2px; }
+        .zombie-mouth {
+            width: 8px;
+            height: 3px;
+            background: #330000;
+            position: absolute;
+            bottom: 1px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .zombie-icon {
+            position: absolute;
+            top: -32px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 26px;
+            filter: drop-shadow(0 0 5px rgba(255,255,255,0.8));
+            pointer-events: none;
+            animation: float 1.5s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-6px); }
+        }
+        #hud {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 20;
+            pointer-events: none;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .hud-item {
+            background: rgba(0,0,0,0.7);
+            border: 2px solid #e94560;
+            padding: 8px 15px;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 12px;
+            text-shadow: 2px 2px 0 #000;
+        }
+        #lives {
+            display: flex;
+            gap: 6px;
+        }
+        .heart {
+            font-size: 20px;
+            transition: all 0.3s;
+        }
+        .heart.lost {
+            opacity: 0.3;
+            filter: grayscale(100%);
+        }
+        #input-area {
+            position: absolute;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        #word-input {
+            background: rgba(0,0,0,0.8);
+            border: 3px solid #e94560;
+            color: #4ecca3;
+            font-family: 'Press Start 2P', 'Courier New', monospace;
+            font-size: 18px;
+            padding: 10px 15px;
+            width: 260px;
+            text-align: center;
+            border-radius: 10px;
+            outline: none;
+            letter-spacing: 3px;
+            text-transform: lowercase;
+            caret-color: #4ecca3;
+            box-shadow: 0 0 20px rgba(233, 68, 96, 0.4);
+        }
+        #word-input::placeholder {
+            color: #555;
+            letter-spacing: 2px;
+            font-size: 12px;
+        }
+        #shoot-btn {
+            background: #e94560;
+            border: none;
+            color: white;
+            font-family: 'Press Start 2P', 'Courier New', monospace;
+            font-size: 13px;
+            padding: 12px 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            border: 3px solid #ff6b6b;
+            box-shadow: 0 0 20px rgba(233, 68, 96, 0.6);
+            transition: all 0.1s;
+            text-shadow: 2px 2px 0 #000;
+        }
+        #shoot-btn:active {
+            transform: scale(0.9);
+            box-shadow: 0 0 40px rgba(233, 68, 96, 0.9);
+        }
+        #message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 30;
+            font-size: 22px;
+            color: #ffd700;
+            text-shadow: 3px 3px 0 #000, 0 0 30px #ffd700;
+            pointer-events: none;
+            text-align: center;
+            line-height: 1.6;
+            max-width: 85%;
+        }
+        .hit-effect {
+            position: absolute;
+            pointer-events: none;
+            z-index: 15;
+            font-size: 32px;
+            animation: hitBoom 0.5s ease-out forwards;
+        }
+        @keyframes hitBoom {
+            0% { transform: scale(0); opacity: 1; }
+            50% { transform: scale(2); opacity: 1; }
+            100% { transform: scale(2.5); opacity: 0; }
+        }
+        .shake {
+            animation: shake 0.3s ease;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translate(-50%, -50%); }
+            25% { transform: translate(-55%, -45%); }
+            75% { transform: translate(-45%, -55%); }
+        }
+        .zombie-word-hint {
+            position: absolute;
+            bottom: -22px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 9px;
+            color: rgba(255,255,255,0.7);
+            background: rgba(0,0,0,0.6);
+            padding: 2px 6px;
+            border-radius: 4px;
+            white-space: nowrap;
+            pointer-events: none;
+            letter-spacing: 2px;
+        }
+        #progress-bar-container {
+            position: absolute;
+            bottom: 90px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            height: 16px;
+            background: rgba(0,0,0,0.6);
+            border: 2px solid #e94560;
+            border-radius: 10px;
+            z-index: 20;
+            overflow: hidden;
+        }
+        #progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #4ecca3, #2ecc71);
+            border-radius: 8px;
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+        #progress-label {
+            position: absolute;
+            top: -22px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            color: #fff;
+            text-shadow: 1px 1px 0 #000;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+    <div id="game">
+        <div id="player">
+            <div class="player-body">
+                <div class="player-face">
+                    <div class="player-eye left"></div>
+                    <div class="player-eye right"></div>
+                    <div class="player-mouth"></div>
+                </div>
+            </div>
+            <div class="player-sword"></div>
+        </div>
+        <div id="hud">
+            <div class="hud-item">⚡ Волна: <span id="level-display">1</span>/<span id="total-waves">5</span></div>
+            <div class="hud-item">💀 Убито: <span id="kill-count">0</span></div>
+            <div class="hud-item">🧟 На поле: <span id="zombie-count">0</span></div>
+            <div id="lives" class="hud-item">
+                <span class="heart">❤️</span>
+                <span class="heart">❤️</span>
+                <span class="heart">❤️</span>
+                <span class="heart">❤️</span>
+                <span class="heart">❤️</span>
+            </div>
+        </div>
+        <div id="progress-bar-container">
+            <div id="progress-label">Прогресс</div>
+            <div id="progress-bar"></div>
+        </div>
+        <div id="input-area">
+            <input type="text" id="word-input" placeholder="СЛОВО + ENTER..." autofocus autocomplete="off">
+            <button id="shoot-btn">🔫 ВЫСТРЕЛ</button>
+        </div>
+        <div id="message"></div>
+    </div>
+
+    <script>
+        (function() {
+            // ===== СЛОВАРЬ =====
+            const wordBank = [
+                { word: 'act', icon: '🎭' },
+                { word: 'cook', icon: '🍳' },
+                { word: 'dance', icon: '💃' },
+                { word: 'draw', icon: '🎨' },
+                { word: 'fix', icon: '🔧' },
+                { word: 'fly', icon: '✈️' },
+                { word: 'jump', icon: '🦘' },
+                { word: 'read', icon: '📖' },
+                { word: 'ride', icon: '🚲' },
+                { word: 'run', icon: '🏃' },
+                { word: 'sing', icon: '🎤' },
+                { word: 'swim', icon: '🏊' },
+                { word: 'write', icon: '✍️' }
+            ];
+
+            const TOTAL_WAVES = 5;
+            const MIN_GAP = 5;
+            const TOTAL_ZOMBIES = 40;
+            const MAX_ZOMBIES_ON_FIELD = 3;
+            const SPAWN_DELAY = 1500;
+
+            // ===== ГЕНЕРАЦИЯ ОЧЕРЕДИ =====
+            function generateWordQueue() {
+                let remaining = {};
+                for (const w of wordBank) {
+                    remaining[w.word] = (w.word === 'write') ? 4 : 3;
+                }
+
+                let queue = [];
+                let recentHistory = [];
+
+                while (queue.length < TOTAL_ZOMBIES) {
+                    let candidates = [];
+                    for (const w of wordBank) {
+                        if (remaining[w.word] > 0 && !recentHistory.includes(w.word)) {
+                            candidates.push(w.word);
+                        }
+                    }
+
+                    if (candidates.length === 0) {
+                        for (const w of wordBank) {
+                            if (remaining[w.word] > 0) {
+                                candidates.push(w.word);
+                            }
+                        }
+                    }
+
+                    const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+                    queue.push({ ...wordBank.find(w => w.word === chosen) });
+                    remaining[chosen]--;
+
+                    recentHistory.push(chosen);
+                    if (recentHistory.length > MIN_GAP) {
+                        recentHistory.shift();
+                    }
+                }
+
+                return queue;
+            }
+
+            // ===== КОНФИГУРАЦИЯ ВОЛН (ЗАМЕДЛЕННАЯ) =====
+            function getWaveConfig(wave) {
+                const configs = [
+                    { zombies: 6, speed: 5000, step: 3 },  // Волна 1: очень медленно
+                    { zombies: 7, speed: 4500, step: 4 },  // Волна 2
+                    { zombies: 8, speed: 4000, step: 5 },  // Волна 3
+                    { zombies: 9, speed: 3500, step: 6 },  // Волна 4
+                    { zombies: 10, speed: 3000, step: 7 }, // Волна 5: чуть быстрее, но всё ещё комфортно
+                ];
+                return configs[Math.min(wave - 1, configs.length - 1)];
+            }
+
+            // ===== СОСТОЯНИЕ =====
+            const gameEl = document.getElementById('game');
+            const playerEl = document.getElementById('player');
+            const wordInput = document.getElementById('word-input');
+            const shootBtn = document.getElementById('shoot-btn');
+            const messageEl = document.getElementById('message');
+            const killCountEl = document.getElementById('kill-count');
+            const levelDisplay = document.getElementById('level-display');
+            const totalWavesEl = document.getElementById('total-waves');
+            const zombieCountEl = document.getElementById('zombie-count');
+            const progressBar = document.getElementById('progress-bar');
+            const progressLabel = document.getElementById('progress-label');
+            const hearts = document.querySelectorAll('.heart');
+
+            let zombies = [];
+            let lives = 5;
+            let kills = 0;
+            let currentWave = 1;
+            let gameActive = false;
+            let gameOver = false;
+            let moveInterval = null;
+            let spawnTimeoutId = null;
+            let waveTransitionTimeout = null;
+            let zombieSpeed = 5000;
+            let zombieStepSize = 3;
+            let zombiesInThisWave = 0;
+            let zombiesSpawned = 0;
+            let waveCompleted = false;
+            let wordQueue = [];
+
+            // Звуки
+            let audioCtx = null;
+            function initAudio() {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }
+            function playSound(freq, type, duration, vol = 0.08) {
+                if (!audioCtx) return;
+                try {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + duration);
+                } catch(e) {}
+            }
+            function sfxShoot() { playSound(600, 'square', 0.1, 0.12); playSound(200, 'sawtooth', 0.15, 0.25); }
+            function sfxKill() { playSound(800, 'square', 0.06, 0.12); setTimeout(() => playSound(1000, 'square', 0.06, 0.12), 80); }
+            function sfxHurt() { playSound(100, 'sawtooth', 0.25, 0.35); }
+            function sfxWaveComplete() { 
+                playSound(500, 'square', 0.08, 0.15); 
+                setTimeout(() => playSound(700, 'square', 0.08, 0.15), 120); 
+                setTimeout(() => playSound(900, 'square', 0.08, 0.2), 240); 
+            }
+            function sfxWin() {
+                [300, 500, 700, 900, 1100].forEach((freq, i) => {
+                    setTimeout(() => playSound(freq, 'square', 0.1, 0.25), i * 100);
+                });
+            }
+
+            // ===== ПОПЫТКА СОЗДАТЬ ЗОМБИ =====
+            function trySpawnZombie() {
+                if (!gameActive) return;
+                if (waveCompleted) return;
+                if (zombiesSpawned >= zombiesInThisWave) return;
+                if (zombies.length >= MAX_ZOMBIES_ON_FIELD) return;
+                if (wordQueue.length === 0) return;
+
+                const gameRect = gameEl.getBoundingClientRect();
+                const maxX = gameRect.width - 70;
+                const maxY = gameRect.height - 70;
+                const margin = 80;
+
+                const side = Math.floor(Math.random() * 4);
+                let x, y;
+                switch(side) {
+                    case 0: x = margin + Math.random() * (maxX - margin * 2); y = -60; break;
+                    case 1: x = maxX + 60; y = margin + Math.random() * (maxY - margin * 2); break;
+                    case 2: x = margin + Math.random() * (maxX - margin * 2); y = maxY + 60; break;
+                    case 3: x = -60; y = margin + Math.random() * (maxY - margin * 2); break;
+                }
+
+                const wordData = wordQueue.shift();
+
+                const zombieEl = document.createElement('div');
+                zombieEl.className = 'zombie';
+                zombieEl.style.left = x + 'px';
+                zombieEl.style.top = y + 'px';
+                zombieEl.innerHTML = `
+                    <div class="zombie-body">
+                        <div class="zombie-face">
+                            <div class="zombie-eye left"></div>
+                            <div class="zombie-eye right"></div>
+                            <div class="zombie-mouth"></div>
+                        </div>
+                    </div>
+                    <div class="zombie-icon">${wordData.icon}</div>
+                    <div class="zombie-word-hint">${'_'.repeat(wordData.word.length)}</div>
+                `;
+                zombieEl.dataset.word = wordData.word;
+                gameEl.appendChild(zombieEl);
+
+                zombies.push({
+                    el: zombieEl,
+                    word: wordData.word,
+                    x: x,
+                    y: y
+                });
+
+                zombiesSpawned++;
+                updateZombieCount();
+                updateProgress();
+            }
+
+            // ===== ПЛАНИРОВАНИЕ СПАВНА =====
+            function scheduleSpawn() {
+                if (!gameActive) return;
+                if (waveCompleted) return;
+                if (zombiesSpawned >= zombiesInThisWave) return;
+
+                if (spawnTimeoutId) clearTimeout(spawnTimeoutId);
+
+                spawnTimeoutId = setTimeout(() => {
+                    if (gameActive && !waveCompleted) {
+                        trySpawnZombie();
+                        scheduleSpawn();
+                    }
+                }, SPAWN_DELAY);
+            }
+
+            function updateZombieCount() {
+                zombieCountEl.textContent = zombies.length;
+            }
+
+            function updateProgress() {
+                const percent = Math.min(100, Math.round((kills / TOTAL_ZOMBIES) * 100));
+                progressBar.style.width = percent + '%';
+                progressLabel.textContent = `Прогресс: ${percent}%`;
+            }
+
+            // ===== ДВИЖЕНИЕ =====
+            function moveZombies() {
+                if (!gameActive) return;
+                const playerRect = playerEl.getBoundingClientRect();
+                const gameRect = gameEl.getBoundingClientRect();
+                const playerX = playerRect.left - gameRect.left + playerRect.width / 2;
+                const playerY = playerRect.top - gameRect.top + playerRect.height / 2;
+
+                for (let i = zombies.length - 1; i >= 0; i--) {
+                    const z = zombies[i];
+                    const zRect = z.el.getBoundingClientRect();
+                    const zX = zRect.left - gameRect.left + zRect.width / 2;
+                    const zY = zRect.top - gameRect.top + zRect.height / 2;
+
+                    const dx = playerX - zX;
+                    const dy = playerY - zY;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < 55) {
+                        removeZombie(i);
+                        loseLife();
+                        continue;
+                    }
+
+                    const normX = dx / dist;
+                    const normY = dy / dist;
+                    z.x += normX * zombieStepSize;
+                    z.y += normY * zombieStepSize;
+                    z.el.style.left = z.x + 'px';
+                    z.el.style.top = z.y + 'px';
+                }
+            }
+
+            // ===== УДАЛИТЬ ЗОМБИ =====
+            function removeZombie(index) {
+                const z = zombies[index];
+                z.el.remove();
+                zombies.splice(index, 1);
+                updateZombieCount();
+                trySpawnZombie();
+                checkWaveComplete();
+            }
+
+            // ===== УБИТЬ ЗОМБИ ВЫСТРЕЛОМ =====
+            function killZombie(index) {
+                const z = zombies[index];
+                const rect = z.el.getBoundingClientRect();
+                const gameRect = gameEl.getBoundingClientRect();
+
+                const hit = document.createElement('div');
+                hit.className = 'hit-effect';
+                hit.textContent = '💥';
+                hit.style.left = (rect.left - gameRect.left) + 'px';
+                hit.style.top = (rect.top - gameRect.top) + 'px';
+                gameEl.appendChild(hit);
+                setTimeout(() => hit.remove(), 500);
+                sfxKill();
+
+                removeZombie(index);
+            }
+
+            // ===== ПОТЕРЯ ЖИЗНИ =====
+            function loseLife() {
+                if (!gameActive) return;
+                lives--;
+                if (hearts[lives]) {
+                    hearts[lives].classList.add('lost');
+                }
+                playerEl.classList.add('shake');
+                setTimeout(() => playerEl.classList.remove('shake'), 300);
+                sfxHurt();
+
+                if (lives <= 0) {
+                    endGame(false);
+                }
+            }
+
+            // ===== ПРОВЕРКА ЗАВЕРШЕНИЯ ВОЛНЫ =====
+            function checkWaveComplete() {
+                if (!gameActive) return;
+                if (waveCompleted) return;
+
+                if (zombiesSpawned >= zombiesInThisWave && zombies.length === 0) {
+                    waveCompleted = true;
+                    if (spawnTimeoutId) clearTimeout(spawnTimeoutId);
+                    completeWave();
+                }
+            }
+
+            // ===== ВЫСТРЕЛ =====
+            function shoot() {
+                if (!gameActive) return;
+                initAudio();
+                const typedWord = wordInput.value.toLowerCase().trim();
+                wordInput.value = '';
+                sfxShoot();
+
+                if (!typedWord) {
+                    wordInput.focus();
+                    return;
+                }
+
+                let targetIndices = [];
+                for (let i = 0; i < zombies.length; i++) {
+                    if (zombies[i].word === typedWord) {
+                        targetIndices.push(i);
+                    }
+                }
+
+                if (targetIndices.length > 0) {
+                    const playerRect = playerEl.getBoundingClientRect();
+                    const gameRect = gameEl.getBoundingClientRect();
+                    const pX = playerRect.left - gameRect.left + playerRect.width / 2;
+                    const pY = playerRect.top - gameRect.top + playerRect.height / 2;
+
+                    let closestIdx = targetIndices[0];
+                    let closestDist = Infinity;
+                    for (const idx of targetIndices) {
+                        const z = zombies[idx];
+                        const dist = Math.sqrt((z.x - pX) ** 2 + (z.y - pY) ** 2);
+                        if (dist < closestDist) {
+                            closestDist = dist;
+                            closestIdx = idx;
+                        }
+                    }
+
+                    killZombie(closestIdx);
+                    kills++;
+                    killCountEl.textContent = kills;
+                    updateProgress();
+                }
+
+                wordInput.focus();
+            }
+
+            // ===== ЗАВЕРШЕНИЕ ВОЛНЫ =====
+            function completeWave() {
+                if (!gameActive) return;
+
+                if (currentWave >= TOTAL_WAVES) {
+                    endGame(true);
+                    return;
+                }
+
+                currentWave++;
+                const config = getWaveConfig(currentWave);
+                zombiesInThisWave = config.zombies;
+                zombiesSpawned = 0;
+                zombieSpeed = config.speed;
+                zombieStepSize = config.step;
+
+                levelDisplay.textContent = currentWave;
+                sfxWaveComplete();
+                messageEl.textContent = `🎯 ВОЛНА ${currentWave}/${TOTAL_WAVES}!\nЗомби: ${config.zombies}`;
+
+                waveTransitionTimeout = setTimeout(() => {
+                    if (gameActive) {
+                        messageEl.textContent = '';
+                        waveCompleted = false;
+                        trySpawnZombie();
+                        scheduleSpawn();
+                    }
+                }, 2500);
+            }
+
+            // ===== КОНЕЦ ИГРЫ =====
+            function endGame(won) {
+                gameActive = false;
+                gameOver = true;
+                clearInterval(moveInterval);
+                if (spawnTimeoutId) clearTimeout(spawnTimeoutId);
+                if (waveTransitionTimeout) clearTimeout(waveTransitionTimeout);
+
+                for (const z of zombies) {
+                    z.el.remove();
+                }
+                zombies = [];
+                updateZombieCount();
+                updateProgress();
+
+                wordInput.disabled = true;
+                shootBtn.disabled = true;
+
+                if (won) {
+                    sfxWin();
+                    const stars = lives === 5 ? '⭐⭐⭐' : lives >= 3 ? '⭐⭐' : '⭐';
+                    messageEl.textContent = `🎉 ПОБЕДА! ${stars}\n\nУбито: ${kills}/${TOTAL_ZOMBIES}\nОсталось жизней: ${lives}\n\nНАЖМИ ПРОБЕЛ ДЛЯ НОВОЙ ИГРЫ`;
+                } else {
+                    messageEl.textContent = `💀 ВЫ ПРОИГРАЛИ\n\nПройдено волн: ${currentWave - 1}/${TOTAL_WAVES}\nУбито: ${kills}/${TOTAL_ZOMBIES}\n\nНАЖМИ ПРОБЕЛ ДЛЯ НОВОЙ ИГРЫ`;
+                }
+            }
+
+            // ===== ЗАПУСК =====
+            function startGame() {
+                wordQueue = generateWordQueue();
+
+                gameActive = true;
+                gameOver = false;
+                waveCompleted = false;
+                lives = 5;
+                kills = 0;
+                currentWave = 1;
+                const config = getWaveConfig(1);
+                zombieSpeed = config.speed;
+                zombieStepSize = config.step;
+                zombiesInThisWave = config.zombies;
+                zombiesSpawned = 0;
+
+                killCountEl.textContent = '0';
+                levelDisplay.textContent = '1';
+                totalWavesEl.textContent = TOTAL_WAVES;
+                zombieCountEl.textContent = '0';
+                messageEl.textContent = '';
+                progressBar.style.width = '0%';
+                progressLabel.textContent = 'Прогресс: 0%';
+                hearts.forEach(h => h.classList.remove('lost'));
+
+                wordInput.disabled = false;
+                shootBtn.disabled = false;
+                wordInput.value = '';
+                wordInput.focus();
+
+                for (const z of zombies) {
+                    z.el.remove();
+                }
+                zombies = [];
+                updateZombieCount();
+
+                if (spawnTimeoutId) clearTimeout(spawnTimeoutId);
+                if (waveTransitionTimeout) clearTimeout(waveTransitionTimeout);
+                if (moveInterval) clearInterval(moveInterval);
+                moveInterval = setInterval(moveZombies, 500); // Обновление раз в 500 мс (плавнее)
+
+                spawnTimeoutId = setTimeout(() => {
+                    if (gameActive) {
+                        trySpawnZombie();
+                        scheduleSpawn();
+                    }
+                }, 1000);
+
+                messageEl.textContent = `🎮 ВОЛНА 1/${TOTAL_WAVES}!\nВсего зомби: ${TOTAL_ZOMBIES}`;
+                setTimeout(() => { if (gameActive) messageEl.textContent = ''; }, 2500);
+            }
+
+            // ===== ОБРАБОТЧИКИ =====
+            shootBtn.addEventListener('click', () => {
+                if (gameActive && !gameOver) shoot();
+            });
+
+            wordInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (gameActive && !gameOver) shoot();
+                }
+            });
+
+            window.addEventListener('keydown', (e) => {
+                if (e.key === ' ' && gameOver) {
+                    e.preventDefault();
+                    startGame();
+                }
+                if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                }
+            });
+
+            startGame();
+            wordInput.focus();
+
+            console.log('🧟 Word Survivor v12 — МЕДЛЕННЫЕ ЗОМБИ');
+            console.log('Скорости: 5000→4500→4000→3500→3000 мс/шаг');
+            console.log('Шаги: 3→4→5→6→7 px');
+            console.log('Ученик успеет подумать и написать!');
+        })();
+    </script>
+</body>
+</html>
