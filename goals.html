@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>📚 Study Quest</title>
+    <style>
+        :root {
+            --bg: #faf8f5;
+            --card: #ffffff;
+            --gold: #c8963e;
+            --gold-light: #f0d78c;
+            --green: #6b9b6b;
+            --blue: #7a9eb1;
+            --red: #c97b7b;
+            --text: #3a3530;
+            --text-secondary: #8a8278;
+            --border: #e5dfd5;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            background: var(--bg);
+            font-family: 'Georgia', 'Segoe UI', serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        #app {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            max-width: 500px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            background: var(--bg);
+            padding-bottom: 80px;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #faf8f5, #f5f0e8);
+            padding: 5vh 20px 20px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            border-bottom: 1px solid var(--border);
+        }
+        .header h1 {
+            color: var(--text);
+            font-size: 6vw;
+            margin-bottom: 5px;
+        }
+        .level-badge {
+            display: inline-block;
+            background: var(--gold-light);
+            color: #5a4020;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 3.5vw;
+            margin-top: 5px;
+        }
+
+        /* Sections */
+        .section {
+            margin: 12px 15px;
+            padding: 18px;
+            background: var(--card);
+            border-radius: 18px;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .section-title {
+            color: var(--text);
+            font-size: 4.5vw;
+            margin-bottom: 12px;
+            font-weight: bold;
+        }
+
+        /* Goal */
+        .goal-bar-bg {
+            width: 100%;
+            height: 18px;
+            background: #f0ebe0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .goal-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #c8963e, #e0b860);
+            border-radius: 10px;
+            transition: width 0.5s;
+        }
+        .goal-stats {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-secondary);
+            font-size: 3vw;
+        }
+        .goal-edit-btn {
+            display: inline-block;
+            margin-top: 8px;
+            color: var(--blue);
+            font-size: 3vw;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        /* B1 */
+        .b1-bar-bg {
+            width: 100%;
+            height: 14px;
+            background: #e8e2d8;
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+        .b1-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #7a9eb1, #8db89a);
+            border-radius: 8px;
+            transition: width 0.5s;
+        }
+        .b1-percent {
+            color: var(--text);
+            font-size: 4vw;
+            text-align: center;
+            margin: 5px 0;
+            font-weight: bold;
+        }
+        .book-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 10px;
+        }
+        .book-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            background: #faf8f5;
+            border-radius: 12px;
+            cursor: pointer;
+            color: var(--text);
+            font-size: 3.2vw;
+            transition: all 0.2s;
+            border: 1px solid var(--border);
+        }
+        .book-item:active { background: #f0ebe0; }
+        .book-progress-mini {
+            color: var(--text-secondary);
+            font-size: 2.8vw;
+        }
+
+        /* Quests */
+        .quest-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px;
+            margin: 6px 0;
+            background: #faf8f5;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text);
+            font-size: 3.5vw;
+            border: 1px solid var(--border);
+        }
+        .quest-item:active { background: #f0ebe0; }
+        .quest-item.done {
+            opacity: 0.5;
+            text-decoration: line-through;
+            background: #f5f2ed;
+        }
+        .quest-gold {
+            color: var(--gold);
+            font-weight: bold;
+            font-size: 3.5vw;
+        }
+        .quests-total {
+            text-align: center;
+            color: var(--gold);
+            font-size: 4vw;
+            margin-top: 12px;
+            font-weight: bold;
+        }
+        .streak-info {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 3vw;
+            margin-top: 5px;
+        }
+        .streak-badge {
+            text-align: center;
+            font-size: 8vw;
+            margin: 10px 0;
+        }
+        .streak-number {
+            text-align: center;
+            color: var(--gold);
+            font-size: 6vw;
+            font-weight: bold;
+        }
+
+        /* Stats */
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            color: var(--text);
+            font-size: 3.5vw;
+            border-bottom: 1px solid var(--border);
+        }
+        .stat-value {
+            color: var(--gold);
+            font-weight: bold;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            height: 100dvh;
+            background: rgba(0,0,0,0.6);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            padding: 5vh 5vw;
+            overflow-y: auto;
+        }
+        .modal-overlay.hidden { display: none; }
+        .modal-box {
+            background: var(--card);
+            border-radius: 18px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .modal-header {
+            color: var(--text);
+            font-size: 5vw;
+            margin-bottom: 12px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .modal-progress {
+            color: var(--text-secondary);
+            font-size: 3.5vw;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .modal-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            max-height: 55vh;
+            overflow-y: auto;
+        }
+        .modal-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: #faf8f5;
+            border-radius: 10px;
+            cursor: pointer;
+            color: var(--text);
+            font-size: 3.2vw;
+            border: 1px solid var(--border);
+        }
+        .modal-item:active { background: #f0ebe0; }
+        .modal-item .checkbox {
+            width: 24px; height: 24px;
+            border: 2px solid var(--text-secondary);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        .modal-item.done .checkbox {
+            background: var(--green);
+            border-color: var(--green);
+            color: white;
+        }
+        .modal-close {
+            position: sticky;
+            bottom: 10px;
+            margin-top: 15px;
+            padding: 14px;
+            background: var(--gold);
+            border: none;
+            border-radius: 25px;
+            color: white;
+            font-size: 4vw;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+            font-family: 'Georgia', serif;
+        }
+        .modal-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 4vw;
+            font-family: 'Georgia', serif;
+            margin: 8px 0;
+            outline: none;
+            background: #faf8f5;
+        }
+        .modal-input:focus { border-color: var(--gold); }
+
+        /* Bottom nav */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            background: var(--card);
+            border-top: 1px solid var(--border);
+            z-index: 50;
+        }
+        .nav-btn {
+            flex: 1;
+            padding: 14px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 3vw;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            font-family: 'Georgia', serif;
+            transition: all 0.2s;
+        }
+        .nav-btn.active { color: var(--gold); border-top: 2px solid var(--gold); }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 2px; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- HOME -->
+        <div id="home-screen">
+            <div class="header">
+                <h1>📚 Study Quest</h1>
+                <div class="level-badge" id="level-badge">Apprentice ⭐</div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">🎯 Goal: <span id="goal-name">Jewelry Findings</span></div>
+                <div class="goal-bar-bg"><div class="goal-bar-fill" id="goal-bar" style="width:0%"></div></div>
+                <div class="goal-stats">
+                    <span id="goal-current">0g</span>
+                    <span id="goal-target">2000g</span>
+                </div>
+                <div class="goal-edit-btn" onclick="openGoalEditor()">✏️ Edit goal</div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">📊 B1 Level Progress</div>
+                <div class="b1-bar-bg"><div class="b1-bar-fill" id="b1-bar" style="width:0%"></div></div>
+                <div class="b1-percent" id="b1-percent">0%</div>
+                <div class="book-list" id="book-list"></div>
+            </div>
+        </div>
+
+        <!-- QUESTS -->
+        <div id="quests-screen" style="display:none;">
+            <div class="header">
+                <h1>⚔️ Daily Quests</h1>
+                <div class="streak-badge" id="streak-emoji">🔥</div>
+                <div class="streak-number" id="streak-num">0 days</div>
+            </div>
+            <div class="section">
+                <div class="section-title">Today</div>
+                <div id="quests-list"></div>
+                <div class="quests-total" id="quests-today-gold">Today: 0g</div>
+            </div>
+            <div class="section">
+                <div class="section-title">🎯 Goal Progress</div>
+                <div class="goal-bar-bg"><div class="goal-bar-fill" id="goal-bar-2" style="width:0%"></div></div>
+                <div class="goal-stats"><span id="goal-current-2">0g</span><span id="goal-target-2">2000g</span></div>
+            </div>
+        </div>
+
+        <!-- STATS -->
+        <div id="stats-screen" style="display:none;">
+            <div class="header">
+                <h1>📊 Statistics</h1>
+            </div>
+            <div class="section">
+                <div class="section-title">Overview</div>
+                <div class="stat-row"><span>Total Gold Earned</span><span class="stat-value" id="stat-total-gold">0g</span></div>
+                <div class="stat-row"><span>Best Streak</span><span class="stat-value" id="stat-best-streak">0 days</span></div>
+                <div class="stat-row"><span>Current Streak</span><span class="stat-value" id="stat-streak">0 days</span></div>
+                <div class="stat-row"><span>Quests Completed</span><span class="stat-value" id="stat-quests">0</span></div>
+            </div>
+            <div class="section">
+                <div class="section-title">B1 Level</div>
+                <div class="stat-row"><span>Total Topics</span><span class="stat-value" id="stat-topics-total">467</span></div>
+                <div class="stat-row"><span>Completed</span><span class="stat-value" id="stat-topics-done">0</span></div>
+                <div class="stat-row"><span>Remaining</span><span class="stat-value" id="stat-topics-left">467</span></div>
+            </div>
+        </div>
+
+        <div class="bottom-nav">
+            <button class="nav-btn active" onclick="showTab('home')">🏠 Home</button>
+            <button class="nav-btn" onclick="showTab('quests')">⚔️ Quests</button>
+            <button class="nav-btn" onclick="showTab('stats')">📊 Stats</button>
+        </div>
+    </div>
+
+    <!-- BOOK MODAL -->
+    <div class="modal-overlay hidden" id="book-modal">
+        <div class="modal-box">
+            <div class="modal-header" id="modal-title"></div>
+            <div class="modal-progress" id="modal-progress"></div>
+            <div class="modal-list" id="modal-list"></div>
+        </div>
+        <button class="modal-close" onclick="closeModal()">Close</button>
+    </div>
+
+    <!-- GOAL MODAL -->
+    <div class="modal-overlay hidden" id="goal-modal">
+        <div class="modal-box">
+            <div class="modal-header">🎯 Edit Goal</div>
+            <input type="text" class="modal-input" id="goal-name-input" placeholder="Goal name">
+            <input type="number" class="modal-input" id="goal-amount-input" placeholder="Amount in gold">
+            <button class="modal-close" onclick="saveGoal()">💾 Save Goal</button>
+        </div>
+    </div>
+
+    <script>
+        const books = [
+            {
+                id: 'aef-sb', name: 'American English File 3 (SB)',
+                topics: [
+                    'Unit 1: Food and Cooking','Unit 1: Family & Personality','Unit 1: Reacting to People',
+                    'Unit 2: Spending money','Unit 2: Changing lives','Progress Check 1 & 2',
+                    'Unit 3: Survive the drive','Unit 3: Men, women and children','Unit 3: Giving opinions',
+                    'Unit 4: Bad manners?','Unit 4: Yes, I can!','Progress Check 3 & 4',
+                    'Unit 5: Sporting superstitions','Unit 5: Relationships','Unit 5: Permission and requests',
+                    'Unit 6: Movies','Unit 6: The body','Progress Check 5 & 6',
+                    'Unit 7: Education','Unit 7: Houses','Unit 7: Making suggestions',
+                    'Unit 8: Work','Unit 8: Shopping','Progress Check 7 & 8',
+                    'Unit 9: Lucky encounters','Unit 9: Digital detox','Unit 9: Indirect questions',
+                    'Unit 10: Idols and icons','Unit 10: Crime','Progress Check 9 & 10'
+                ]
+            },
+            {
+                id: 'aef-wb', name: 'American English File 3 (WB)',
+                topics: [
+                    'Unit 1: Food and Cooking','Unit 1: Family & Personality','Unit 1: Reacting to People',
+                    'Unit 2: Spending money','Unit 2: Changing lives','Progress Check 1 & 2',
+                    'Unit 3: Survive the drive','Unit 3: Men, women and children','Unit 3: Giving opinions',
+                    'Unit 4: Bad manners?','Unit 4: Yes, I can!','Progress Check 3 & 4',
+                    'Unit 5: Sporting superstitions','Unit 5: Relationships','Unit 5: Permission and requests',
+                    'Unit 6: Movies','Unit 6: The body','Progress Check 5 & 6',
+                    'Unit 7: Education','Unit 7: Houses','Unit 7: Making suggestions',
+                    'Unit 8: Work','Unit 8: Shopping','Progress Check 7 & 8',
+                    'Unit 9: Lucky encounters','Unit 9: Digital detox','Unit 9: Indirect questions',
+                    'Unit 10: Idols and icons','Unit 10: Crime','Progress Check 9 & 10'
+                ]
+            },
+            {
+                id: 'evu', name: 'English Vocabulary in Use (Pre-Int & Int)',
+                topics: [
+                    '5 Country, nationality and language','6 The physical world','7 Weather','8 Animals and insects',
+                    '9 The body and movement','10 Describing appearance','11 Describing character','12 Feelings',
+                    '13 Family and friends','14 Growing up','15 Romance, marriage and divorce',
+                    '16 Daily routines','17 The place where you live','18 Around the home','19 Money','20 Health',
+                    '21 Clothes','22 Fashion and buying clothes','23 Shopping','24 Food','25 Cooking',
+                    '26 City life','27 Life in the country','28 Transport','29 On the road','30 Notices and warnings',
+                    '31 Classroom language','32 School education','33 Studying English and taking exams','34 University education',
+                    '35 Jobs','36 Talking about your work','37 Making a career','38 Working in an office','39 Running a company','40 Business and finance',
+                    '41 Sport and leisure','42 Competitive sport','43 Books and films','44 Music','45 Special events',
+                    '46 Travel bookings','47 Air travel','48 Hotels and restaurants','49 Cafés','50 Sightseeing holidays','51 Holidays by the sea',
+                    '52 Newspapers and television','53 Phoning and texting','54 Computers','55 Email and the Internet',
+                    '56 Crime','57 Politics','58 Climate change','59 War and violence',
+                    '60 Time','61 Numbers','62 Distance, dimensions and size','63 Objects, materials, shapes and colour','64 Containers and quantities',
+                    '65 Apologies, excuses and thanks','66 Requests, permission and suggestions','67 Opinions, agreeing and disagreeing','68 Likes, dislikes, attitudes and preferences','69 Greetings, farewells and special expressions',
+                    '70 Prefixes: changing meaning','71 Suffixes: forming nouns','72 Suffixes: forming adjectives','73 Compound nouns',
+                    '74 Word partners','75 Fixed phrases','76 Fixed phrases in conversation','77 Verb or adjective + preposition','78 Prepositional phrases','79 Phrasal verbs 1: form and meaning','80 Phrasal verbs 2: grammar and style',
+                    '81 Make, do and take','82 Key verbs: give, keep and miss','83 Get: uses, phrases and phrasal verbs','84 Go: meanings and expressions','85 The senses',
+                    '86 Uncountable nouns','87 Verb constructions 1','88 Verb constructions 2','89 Adjectives','90 Prepositions: place and movement','91 Adverbs',
+                    '92 Time and sequence','93 Addition and contrast','94 Reason, purpose, result, condition',
+                    '95 Formal and informal English','96 Completing forms and CVs','97 Writing an essay','98 Formal letters and emails','99 Informal emails and messages','100 Abbreviations'
+                ]
+            },
+            {
+                id: 'egu', name: 'English Grammar in Use (Intermediate)',
+                topics: [
+                    '1 Present continuous','2 Present simple','3 Present continuous and simple 1','4 Present continuous and simple 2',
+                    '5 Past simple','6 Past continuous','7 Present perfect 1','8 Present perfect 2','9 Present perfect continuous',
+                    '10 Present perfect continuous and simple','11 how long have you (been) …?','12 for and since when …?','13 Present perfect and past 1','14 Present perfect and past 2',
+                    '15 Past perfect','16 Past perfect continuous','17 have and have got','18 used to (do)',
+                    '19 Present tenses for the future','20 I\'m going to (do)','21 will and shall 1','22 will and shall 2','23 I will and I\'m going to','24 will be doing and will have done','25 when I do and when I\'ve done',
+                    '26 can, could and (be) able to','27 could (do) and could have (done)','28 must and can\'t','29 may and might 1','30 may and might 2',
+                    '31 have to and must','32 must mustn\'t needn\'t','33 should 1','34 should 2','35 I\'d better … it\'s time …','36 would','37 can/could/would you …?',
+                    '38 if I do … and if I did …','39 if I knew … I wish I knew …','40 if I had known …','41 wish',
+                    '42 Passive 1','43 Passive 2','44 Passive 3','45 it is said that …','46 have something done',
+                    '47 Reported speech 1','48 Reported speech 2','49 Questions 1','50 Questions 2','51 Auxiliary verbs','52 Question tags',
+                    '53 Verb + -ing','54 Verb + to …','55 Verb (+ object) + to …','56 Verb + -ing or to … 1','57 Verb + -ing or to … 2','58 Verb + -ing or to … 3','59 prefer and would rather',
+                    '60 Preposition + -ing','61 be/get used to …','62 Verb + preposition + -ing','63 there\'s no point in -ing','64 to … , for … and so that …','65 Adjective + to …',
+                    '66 to … and preposition + -ing','67 see somebody do and see somebody doing','68 -ing clauses',
+                    '69 Countable and uncountable 1','70 Countable and uncountable 2','71 Countable nouns with a/an and some','72 a/an and the','73 the 1','74 the 2','75 the 3','76 the 4',
+                    '77 Names with and without the 1','78 Names with and without the 2','79 Singular and plural','80 Noun + noun','81 -\'s and of …',
+                    '82 myself/yourself/themselves etc.','83 a friend of mine','84 there … and it …','85 some and any','86 no/none/any','87 much, many, little, few','88 all / most / no / none etc.',
+                    '89 both / neither / either','90 all every whole','91 each and every',
+                    '92 Relative clauses 1','93 Relative clauses 2','94 Relative clauses 3','95 Relative clauses 4','96 Relative clauses 5','97 -ing and -ed clauses',
+                    '98 Adjectives ending in -ing and -ed','99 Adjectives: a nice new house','100 Adjectives and adverbs 1','101 Adjectives and adverbs 2',
+                    '102 so and such','103 enough and too','104 quite, pretty, rather and fairly','105 Comparative 1','106 Comparative 2','107 Comparative 3','108 Superlative',
+                    '109 Word order 1','110 Word order 2','111 still any more yet already','112 even',
+                    '113 although though even though','114 in case','115 unless as long as provided','116 as','117 like and as','118 like as if','119 during for while','120 by and until',
+                    '121 at/on/in (time)','122 on time and in time','123 in/at/on (position) 1','124 in/at/on (position) 2','125 in/at/on (position) 3',
+                    '126 to, at, in and into','127 in/on/at (other uses)','128 by','129 Noun + preposition','130 Adjective + preposition 1','131 Adjective + preposition 2',
+                    '132 Verb + preposition 1','133 Verb + preposition 2','134 Verb + preposition 3','135 Verb + preposition 4','136 Verb + preposition 5',
+                    '137 Phrasal verbs 1','138 Phrasal verbs 2','139 Phrasal verbs 3','140 Phrasal verbs 4','141 Phrasal verbs 5',
+                    '142 Phrasal verbs 6','143 Phrasal verbs 7','144 Phrasal verbs 8','145 Phrasal verbs 9'
+                ]
+            },
+            {
+                id: 'eci', name: 'English Collocations in Use (Int)',
+                topics: [
+                    '6 Intensifying adverbs','7 Everyday verbs 1','8 Everyday verbs 2','9 Everyday verbs 3',
+                    '10 Synonyms and confusable words 1','11 Synonyms and confusable words 2','12 Metaphor',
+                    '13 Weather','14 Travel','15 Countryside','16 Towns and cities',
+                    '17 People: character and behaviour','18 People: physical appearance','19 Families','20 Relationships',
+                    '21 Houses, flats and rooms','22 Eating and drinking','23 Films and books','24 Music','25 Sport','26 Health and illness',
+                    '27 Using the Internet','28 Study and learning','29 Presentations','30 Work','31 Business','32 Academic writing 1','33 Academic writing 2',
+                    '34 Laws and punishments','35 Crime','36 News','37 Money','38 War and peace','39 Global problem',
+                    '40 Time','41 Sound','42 Distance and size','43 Colour and light','44 Texture','45 Taste and smell',
+                    '46 Number and frequency','47 Movement and speed','48 Change','49 Ways of speaking','50 Ways of walking',
+                    '51 Starting and finishing','52 Talking about success and failure','53 Talking about cause and effect',
+                    '54 Remembering and sensing','55 Agreeing and disagreeing','56 Talking about beliefs and opinions',
+                    '57 Deciding and choosing','58 Claiming and denying','59 Liking and disliking','60 Praising and criticising'
+                ]
+            },
+            {
+                id: 'epv', name: 'English Phrasal Verbs in Use (Int)',
+                topics: [
+                    '6 Come','7 Get','8 Go','9 Look','10 Make','11 Put','12 Take',
+                    '13 Up','14 Out','15 Off','16 On and in','17 Down and over','18 Around and about','19 For and with','20 Through and back','21 Into and away',
+                    '22 Time: spending time','23 Time: passing of time','24 Location','25 Cause and effect','26 Change',
+                    '27 Success and failure','28 Starting and finishing','29 Actions and movement','30 Destroying and reacting','31 Communication',
+                    '32 Describing people and places','33 Describing public events','34 Describing situations','35 Giving and getting information',
+                    '36 Solving problems','37 Decisions and plans','38 Disagreeing','39 Persuading','40 Praising and criticising','41 Exclamations and warnings',
+                    '42 The classroom and learning','43 Student life: courses and exams','44 Student life: reading and writing',
+                    '45 Work: jobs and career','46 Work: being busy','47 Money: salaries, bills, payments','48 Money: buying and selling','49 Business','50 Calling people',
+                    '51 Feelings','52 Relationships','53 Relationships: problems','54 Secrets and conversations','55 Stages through life',
+                    '56 Health','57 Sport','58 Homes and daily routines','59 Socialising','60 Food and drink',
+                    '61 Weather','62 Travel','63 Driving and cycling','64 Mobile devices','65 Computers','66 News','67 Crime',
+                    '68 Power and authority','69 American and Australian phrasal verbs','70 Academic writing'
+                ]
+            },
+            {
+                id: 'eii', name: 'English Idioms in Use (Int)',
+                topics: [
+                    '3 Happiness and sadness','4 Anger','5 Knowing and understanding','6 Experience and perception',
+                    '7 Success and failure','8 Having problems','9 Dealing with problems','10 Power and authority',
+                    '11 Structuring and talking about arguments','12 Conversational responses','13 Praise and criticism',
+                    '14 Opinions on people and actions','15 Behaviour and attitudes','16 Reacting to what others say',
+                    '17 Danger','18 Effort','19 Necessity and desirability','20 Probability and luck','21 Social status',
+                    '22 Human relationships','23 Size and position','24 Money','25 Work','26 Speed, distance and intensity',
+                    '27 Communication 1','28 Communication 2','29 Life and experience: proverbs','30 Memory',
+                    '31 Time 1','32 Time 2','33 The elements','34 Colour','35 Clothes','36 Games and sport',
+                    '37 Animals 1','38 Animals 2','39 Weapons and war','40 Food','41 Roads','42 Houses and household objects',
+                    '43 Nature','44 Boats and sailing','45 Science, technology and machines','46 Music and theatre',
+                    '47 Finger, thumb, hand','48 Foot, heel, toe','49 Bones, shoulder, arm, leg','50 Head',
+                    '51 Face, hair, neck, chest','52 Eyes','53 Ear, lips, mouth, nose, teeth, tongue','54 Heart',
+                    '55 Brain, mind, blood and guts','56 Back','57 Long','58 Line','59 Act, action, activity',
+                    '60 Good and bad','61 Ground','62 Similes and idioms with like and as'
+                ]
+            }
+        ];
+
+        const quests = [
+            { id: 'lesson', label: 'Complete a unit in a textbook', gold: 20 },
+            { id: 'vocab10', label: 'Learn 10+ new words', gold: 15 },
+            { id: 'review', label: 'Review words (any app)', gold: 10 },
+            { id: 'listening', label: 'Listening 15+ min', gold: 10 },
+            { id: 'reading', label: 'Reading in English', gold: 15 },
+            { id: 'essay', label: 'Write an essay', gold: 30 },
+            { id: 'wordfall', label: 'Play Word Splash', gold: 5 },
+        ];
+
+        const LEVELS = [
+            { name: 'Apprentice', min: 0 }, { name: 'Scholar', min: 200 }, { name: 'Sage', min: 500 },
+            { name: 'Archmage', min: 1000 }, { name: 'Legend', min: 2000 },
+        ];
+
+        let totalGold = 0, todayGold = 0, streak = 0, bestStreak = 0, totalQuests = 0;
+        let questsDone = {}, bookProgress = {}, lastDate = '';
+        let goalName = 'Jewelry Findings', goalAmount = 2000;
+
+        function save() {
+            localStorage.setItem('studyquest', JSON.stringify({
+                totalGold, todayGold, streak, bestStreak, totalQuests, questsDone, bookProgress, lastDate, goalName, goalAmount
+            }));
+        }
+        function load() {
+            const raw = localStorage.getItem('studyquest');
+            if (raw) {
+                try {
+                    const d = JSON.parse(raw);
+                    totalGold = d.totalGold || 0; todayGold = d.todayGold || 0;
+                    streak = d.streak || 0; bestStreak = d.bestStreak || 0;
+                    totalQuests = d.totalQuests || 0; questsDone = d.questsDone || {};
+                    bookProgress = d.bookProgress || {}; lastDate = d.lastDate || '';
+                    goalName = d.goalName || 'Jewelry Findings'; goalAmount = d.goalAmount || 2000;
+                } catch(e) {}
+            }
+        }
+        load();
+
+        const today = new Date().toDateString();
+        if (lastDate !== today) {
+            if (lastDate === new Date(new Date().setDate(new Date().getDate()-1)).toDateString()) streak++;
+            else if (lastDate !== '') streak = 0;
+            if (streak > bestStreak) bestStreak = streak;
+            todayGold = 0; questsDone = {}; lastDate = today; save();
+        }
+
+        function getLevel() {
+            for (let i = LEVELS.length-1; i >= 0; i--) if (totalGold >= LEVELS[i].min) return LEVELS[i].name;
+            return LEVELS[0].name;
+        }
+        function countBookDone(id) { const p = bookProgress[id] || {}; return Object.values(p).filter(v => v).length; }
+        function getTotalDone() { let d = 0; for (const b of books) d += countBookDone(b.id); return d; }
+        function getTotal() { let t = 0; for (const b of books) t += b.topics.length; return t; }
+
+        function updateUI() {
+            const pct = Math.min(100, Math.round((totalGold / goalAmount) * 100));
+            document.getElementById('goal-bar').style.width = pct + '%';
+            document.getElementById('goal-bar-2').style.width = pct + '%';
+            document.getElementById('goal-current').textContent = totalGold + 'g';
+            document.getElementById('goal-current-2').textContent = totalGold + 'g';
+            document.getElementById('goal-target').textContent = goalAmount + 'g';
+            document.getElementById('goal-target-2').textContent = goalAmount + 'g';
+            document.getElementById('goal-name').textContent = goalName;
+            document.getElementById('level-badge').textContent = getLevel() + ' ⭐';
+
+            const done = getTotalDone(), total = getTotal();
+            const b1pct = total > 0 ? Math.round((done / total) * 100) : 0;
+            document.getElementById('b1-bar').style.width = b1pct + '%';
+            document.getElementById('b1-percent').textContent = b1pct + '% (' + done + '/' + total + ')';
+
+            const bl = document.getElementById('book-list');
+            bl.innerHTML = '';
+            for (const b of books) {
+                const bd = countBookDone(b.id);
+                const item = document.createElement('div');
+                item.className = 'book-item';
+                item.innerHTML = `<span>${b.name}</span><span class="book-progress-mini">${bd}/${b.topics.length}</span>`;
+                item.onclick = () => openBook(b.id);
+                bl.appendChild(item);
+            }
+
+            const ql = document.getElementById('quests-list');
+            ql.innerHTML = '';
+            for (const q of quests) {
+                const d = questsDone[q.id];
+                const item = document.createElement('div');
+                item.className = 'quest-item' + (d ? ' done' : '');
+                item.innerHTML = `<span>${d ? '✅ ' : '☐ '}${q.label}</span><span class="quest-gold">+${q.gold}g</span>`;
+                if (!d) item.onclick = () => { questsDone[q.id] = true; todayGold += q.gold; totalGold += q.gold; totalQuests++; save();
+                    updateUI(); };
+                ql.appendChild(item);
+            }
+            document.getElementById('quests-today-gold').textContent = 'Today: ' + todayGold + 'g';
+            document.getElementById('streak-num').textContent = streak + ' day' + (streak !== 1 ? 's' : '');
+            document.getElementById('streak-emoji').textContent = streak >= 7 ? '🔥🔥🔥' : streak >= 3 ? '🔥🔥' : streak > 0 ? '🔥' : '💤';
+
+            document.getElementById('stat-total-gold').textContent = totalGold + 'g';
+            document.getElementById('stat-best-streak').textContent = bestStreak + ' days';
+            document.getElementById('stat-streak').textContent = streak + ' days';
+            document.getElementById('stat-quests').textContent = totalQuests;
+            document.getElementById('stat-topics-total').textContent = total;
+            document.getElementById('stat-topics-done').textContent = done;
+            document.getElementById('stat-topics-left').textContent = total - done;
+        }
+
+        function openBook(id) {
+            const book = books.find(b => b.id === id);
+            if (!book) return;
+            document.getElementById('modal-title').textContent = book.name;
+            const list = document.getElementById('modal-list');
+            list.innerHTML = '';
+            for (let i = 0; i < book.topics.length; i++) {
+                const done = bookProgress[id] && bookProgress[id][i];
+                const item = document.createElement('div');
+                item.className = 'modal-item' + (done ? ' done' : '');
+                item.innerHTML = `<div class="checkbox">${done ? '✓' : ''}</div><span>${book.topics[i]}</span>`;
+                item.onclick = () => {
+                    if (!bookProgress[id]) bookProgress[id] = {};
+                    bookProgress[id][i] = !bookProgress[id][i];
+                    save(); openBook(id);
+                    updateUI();
+                };
+                list.appendChild(item);
+            }
+            document.getElementById('modal-progress').textContent = countBookDone(id) + '/' + book.topics.length;
+            document.getElementById('book-modal').classList.remove('hidden');
+        }
+        function closeModal() { document.getElementById('book-modal').classList.add('hidden'); }
+
+        function openGoalEditor() {
+            document.getElementById('goal-name-input').value = goalName;
+            document.getElementById('goal-amount-input').value = goalAmount;
+            document.getElementById('goal-modal').classList.remove('hidden');
+        }
+        function saveGoal() {
+            const name = document.getElementById('goal-name-input').value.trim();
+            const amount = parseInt(document.getElementById('goal-amount-input').value);
+            if (name) goalName = name;
+            if (amount > 0) goalAmount = amount;
+            save(); updateUI();
+            document.getElementById('goal-modal').classList.add('hidden');
+        }
+
+        function showTab(tab) {
+            document.getElementById('home-screen').style.display = tab === 'home' ? 'block' : 'none';
+            document.getElementById('quests-screen').style.display = tab === 'quests' ? 'block' : 'none';
+            document.getElementById('stats-screen').style.display = tab === 'stats' ? 'block' : 'none';
+            document.querySelectorAll('.nav-btn').forEach((b, i) => {
+                b.classList.toggle('active', (i === 0 && tab === 'home') || (i === 1 && tab === 'quests') || (i === 2 && tab === 'stats'));
+            });
+            updateUI();
+        }
+
+        updateUI();
+    </script>
+</body>
+</html>
