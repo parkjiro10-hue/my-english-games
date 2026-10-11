@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>📚 Study Quest</title>
+    <style>
+        :root {
+            --bg: #faf8f5;
+            --card: #ffffff;
+            --gold: #c8963e;
+            --gold-light: #f0d78c;
+            --green: #6b9b6b;
+            --blue: #7a9eb1;
+            --red: #c97b7b;
+            --text: #3a3530;
+            --text-secondary: #8a8278;
+            --border: #e5dfd5;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            background: var(--bg);
+            font-family: 'Georgia', 'Segoe UI', serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            min-height: 100dvh;
+            overflow-y: auto;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        #app {
+            width: 100%;
+            max-width: 800px;
+            min-height: 100vh;
+            background: var(--bg);
+            padding-bottom: 40px;
+            position: relative;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #faf8f5, #f5f0e8);
+            padding: 25px 20px 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+        .header h1 {
+            color: var(--text);
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        .b1-bar-container {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        .b1-bar-bg {
+            width: 100%;
+            height: 20px;
+            background: #e8e2d8;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+        .b1-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #7a9eb1, #8db89a);
+            border-radius: 10px;
+            transition: width 0.5s;
+        }
+        .b1-percent {
+            color: var(--text);
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .b1-label {
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 130px;
+            z-index: 40;
+            overflow-x: auto;
+        }
+        .tab {
+            flex: 1;
+            padding: 14px 10px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            font-family: 'Georgia', serif;
+            transition: all 0.2s;
+            white-space: nowrap;
+            border-bottom: 3px solid transparent;
+        }
+        .tab.active {
+            color: var(--gold);
+            border-bottom-color: var(--gold);
+            font-weight: bold;
+        }
+        .tab:hover { background: #f5f0e8; }
+
+        /* Content */
+        .content {
+            padding: 15px;
+        }
+        .category-title {
+            color: var(--text);
+            font-size: 20px;
+            font-weight: bold;
+            margin: 10px 5px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .category-percent {
+            color: var(--gold);
+            font-size: 16px;
+        }
+
+        /* Book card */
+        .book-card {
+            background: var(--card);
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            margin-bottom: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+            transition: all 0.2s;
+        }
+        .book-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 16px;
+            cursor: pointer;
+            transition: background 0.2s;
+            gap: 10px;
+        }
+        .book-header:hover { background: #f5f0e8; }
+        .book-header-main {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            min-width: 0;
+        }
+        .book-arrow {
+            color: var(--text-secondary);
+            font-size: 14px;
+            transition: transform 0.2s;
+            flex-shrink: 0;
+        }
+        .book-arrow.open { transform: rotate(90deg); }
+        .book-name {
+            color: var(--text);
+            font-size: 15px;
+            font-weight: bold;
+            flex: 1;
+        }
+        .book-stats {
+            color: var(--text-secondary);
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+        .book-percent {
+            color: var(--gold);
+            font-size: 14px;
+            font-weight: bold;
+            flex-shrink: 0;
+            min-width: 45px;
+            text-align: right;
+        }
+
+        /* Book body */
+        .book-body {
+            display: none;
+            padding: 5px 10px 12px;
+            border-top: 1px solid var(--border);
+            background: #fdfcfa;
+        }
+        .book-body.open { display: block; }
+
+        /* Section (for nested books) */
+        .section-item {
+            background: #faf8f5;
+            border-radius: 10px;
+            margin: 6px 0;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        .section-header {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            gap: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .section-header:hover { background: #f0ebe0; }
+        .section-arrow {
+            color: var(--text-secondary);
+            font-size: 12px;
+            transition: transform 0.2s;
+            flex-shrink: 0;
+            width: 14px;
+        }
+        .section-arrow.open { transform: rotate(90deg); }
+        .section-checkbox {
+            width: 22px;
+            height: 22px;
+            border: 2px solid var(--text-secondary);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            flex-shrink: 0;
+            cursor: pointer;
+            background: white;
+            transition: all 0.2s;
+        }
+        .section-checkbox.checked {
+            background: var(--green);
+            border-color: var(--green);
+            color: white;
+        }
+        .section-checkbox.partial {
+            background: var(--gold-light);
+            border-color: var(--gold);
+            color: var(--text);
+        }
+        .section-name {
+            color: var(--text);
+            font-size: 14px;
+            flex: 1;
+            font-weight: bold;
+        }
+        .section-progress {
+            color: var(--text-secondary);
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        /* Topic (flat list) */
+        .topic-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 12px;
+            margin: 3px 0;
+            background: #faf8f5;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+        .topic-item:hover { background: #f0ebe0; }
+        .topic-checkbox {
+            width: 22px;
+            height: 22px;
+            border: 2px solid var(--text-secondary);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            flex-shrink: 0;
+            background: white;
+            transition: all 0.2s;
+        }
+        .topic-checkbox.checked {
+            background: var(--green);
+            border-color: var(--green);
+            color: white;
+        }
+        .topic-name {
+            color: var(--text);
+            font-size: 13.5px;
+            flex: 1;
+            line-height: 1.4;
+        }
+        .topic-item.completed .topic-name {
+            color: var(--text-secondary);
+            text-decoration: line-through;
+        }
+
+        /* Subtopics inside section */
+        .subtopics-list {
+            display: none;
+            padding: 4px 8px 8px;
+        }
+        .subtopics-list.open { display: block; }
+        .subtopic-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 7px 12px;
+            margin: 2px 0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .subtopic-item:hover { background: #f0ebe0; }
+        .subtopic-checkbox {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--text-secondary);
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            flex-shrink: 0;
+            background: white;
+            transition: all 0.2s;
+        }
+        .subtopic-checkbox.checked {
+            background: var(--green);
+            border-color: var(--green);
+            color: white;
+        }
+        .subtopic-name {
+            color: var(--text);
+            font-size: 13px;
+            flex: 1;
+            line-height: 1.4;
+        }
+        .subtopic-item.completed .subtopic-name {
+            color: var(--text-secondary);
+            text-decoration: line-through;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 40px 20px;
+            font-size: 15px;
+        }
+
+        /* Goal & Quests (from previous version) */
+        .goal-section {
+            margin: 15px;
+            padding: 18px;
+            background: var(--card);
+            border-radius: 18px;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .section-title {
+            color: var(--text);
+            font-size: 18px;
+            margin-bottom: 12px;
+            font-weight: bold;
+        }
+        .goal-bar-bg {
+            width: 100%;
+            height: 18px;
+            background: #f0ebe0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .goal-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #c8963e, #e0b860);
+            border-radius: 10px;
+            transition: width 0.5s;
+        }
+        .goal-stats {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        .goal-edit-btn {
+            display: inline-block;
+            margin-top: 10px;
+            color: var(--blue);
+            font-size: 13px;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        .quest-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px;
+            margin: 6px 0;
+            background: #faf8f5;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text);
+            font-size: 15px;
+            border: 1px solid var(--border);
+        }
+        .quest-item:hover { background: #f0ebe0; }
+        .quest-item:active { transform: scale(0.98); }
+        .quest-count {
+            color: var(--text-secondary);
+            font-size: 12px;
+            margin-left: 8px;
+        }
+        .quest-gold {
+            color: var(--gold);
+            font-weight: bold;
+            font-size: 15px;
+        }
+        .quests-total {
+            text-align: center;
+            color: var(--gold);
+            font-size: 17px;
+            margin-top: 12px;
+            font-weight: bold;
+        }
+        .streak-badge {
+            text-align: center;
+            font-size: 40px;
+            margin: 10px 0;
+        }
+        .streak-number {
+            text-align: center;
+            color: var(--gold);
+            font-size: 26px;
+            font-weight: bold;
+        }
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            color: var(--text);
+            font-size: 14px;
+            border-bottom: 1px solid var(--border);
+        }
+        .stat-value {
+            color: var(--gold);
+            font-weight: bold;
+        }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.5);
+            z-index: 100;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal-box {
+            background: var(--card);
+            border-radius: 18px;
+            padding: 25px;
+            max-width: 400px;
+            width: 100%;
+        }
+        .modal-header {
+            color: var(--text);
+            font-size: 20px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .modal-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 16px;
+            font-family: 'Georgia', serif;
+            margin: 8px 0;
+            outline: none;
+            background: #faf8f5;
+        }
+        .modal-input:focus { border-color: var(--gold); }
+        .modal-btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--gold);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: 'Georgia', serif;
+            margin-top: 8px;
+        }
+        .modal-btn:hover { background: #b8853a; }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- HEADER -->
+        <div class="header">
+            <h1>📚 Study Quest</h1>
+            <div class="b1-bar-container">
+                <div class="b1-label">B1 Level Progress</div>
+                <div class="b1-bar-bg"><div class="b1-bar-fill" id="b1-bar" style="width:0%"></div></div>
+                <div class="b1-percent" id="b1-percent">0%</div>
+            </div>
+        </div>
+
+        <!-- TABS -->
+        <div class="tabs" id="tabs">
+            <button class="tab" data-tab="home">🏠 Home</button>
+            <button class="tab" data-tab="main">📘 Основные</button>
+            <button class="tab" data-tab="grammar">📗 Грамматика</button>
+            <button class="tab" data-tab="vocab">📙 Лексика</button>
+            <button class="tab" data-tab="extra">📕 Допы</button>
+            <button class="tab" data-tab="stats">📊 Stats</button>
+        </div>
+
+        <!-- CONTENT -->
+        <div class="content" id="content"></div>
+    </div>
+
+    <!-- GOAL MODAL -->
+    <div class="modal-overlay" id="goal-modal">
+        <div class="modal-box">
+            <div class="modal-header">🎯 Edit Goal</div>
+            <input type="text" class="modal-input" id="goal-name-input" placeholder="Goal name">
+            <input type="number" class="modal-input" id="goal-amount-input" placeholder="Amount in gold">
+            <button class="modal-btn" onclick="saveGoal()">💾 Save</button>
+        </div>
+    </div>
+
+    <script>
+        const booksData = [
+            // ===== ОСНОВНЫЕ =====
+            {
+                id: 'aef-sb', category: 'main', name: 'American English File 3 (SB)',
+                topics: [
+                    'Unit 1: Food and Cooking','Unit 1: Family & Personality','Unit 1: Reacting to People',
+                    'Unit 2: Spending money','Unit 2: Changing lives','Progress Check 1 & 2',
+                    'Unit 3: Survive the drive','Unit 3: Men, women and children','Unit 3: Giving opinions',
+                    'Unit 4: Bad manners?','Unit 4: Yes, I can!','Progress Check 3 & 4',
+                    'Unit 5: Sporting superstitions','Unit 5: Relationships','Unit 5: Permission and requests',
+                    'Unit 6: Movies','Unit 6: The body','Progress Check 5 & 6',
+                    'Unit 7: Education','Unit 7: Houses','Unit 7: Making suggestions',
+                    'Unit 8: Work','Unit 8: Shopping','Progress Check 7 & 8',
+                    'Unit 9: Lucky encounters','Unit 9: Digital detox','Unit 9: Indirect questions',
+                    'Unit 10: Idols and icons','Unit 10: Crime','Progress Check 9 & 10'
+                ]
+            },
+            {
+                id: 'aef-wb', category: 'main', name: 'American English File 3 (WB)',
+                topics: [
+                    'Unit 1: Food and Cooking','Unit 1: Family & Personality','Unit 1: Reacting to People',
+                    'Unit 2: Spending money','Unit 2: Changing lives','Progress Check 1 & 2',
+                    'Unit 3: Survive the drive','Unit 3: Men, women and children','Unit 3: Giving opinions',
+                    'Unit 4: Bad manners?','Unit 4: Yes, I can!','Progress Check 3 & 4',
+                    'Unit 5: Sporting superstitions','Unit 5: Relationships','Unit 5: Permission and requests',
+                    'Unit 6: Movies','Unit 6: The body','Progress Check 5 & 6',
+                    'Unit 7: Education','Unit 7: Houses','Unit 7: Making suggestions',
+                    'Unit 8: Work','Unit 8: Shopping','Progress Check 7 & 8',
+                    'Unit 9: Lucky encounters','Unit 9: Digital detox','Unit 9: Indirect questions',
+                    'Unit 10: Idols and icons','Unit 10: Crime','Progress Check 9 & 10'
+                ]
+            },
+            
+            // ===== ГРАММАТИКА =====
+            {
+                id: 'egu', category: 'grammar', name: 'English Grammar in Use (Intermediate)',
+                topics: [
+                    '1 Present continuous','2 Present simple','3 Present continuous and present simple 1','4 Present continuous and present simple 2',
+                    '5 Past simple','6 Past continuous','7 Present perfect 1','8 Present perfect 2','9 Present perfect continuous',
+                    '10 Present perfect continuous and simple','11 how long have you (been) …?','12 for and since when …?','13 Present perfect and past 1','14 Present perfect and past 2',
+                    '15 Past perfect','16 Past perfect continuous','17 have and have got','18 used to (do)',
+                    '19 Present tenses for the future','20 I\'m going to (do)','21 will and shall 1','22 will and shall 2','23 I will and I\'m going to','24 will be doing and will have done','25 when I do and when I\'ve done',
+                    '26 can, could and (be) able to','27 could (do) and could have (done)','28 must and can\'t','29 may and might 1','30 may and might 2',
+                    '31 have to and must','32 must mustn\'t needn\'t','33 should 1','34 should 2','35 I\'d better … it\'s time …','36 would','37 can/could/would you …?',
+                    '38 if I do … and if I did …','39 if I knew … I wish I knew …','40 if I had known …','41 wish',
+                    '42 Passive 1','43 Passive 2','44 Passive 3','45 it is said that …','46 have something done',
+                    '47 Reported speech 1','48 Reported speech 2','49 Questions 1','50 Questions 2','51 Auxiliary verbs','52 Question tags',
+                    '53 Verb + -ing','54 Verb + to …','55 Verb (+ object) + to …','56 Verb + -ing or to … 1','57 Verb + -ing or to … 2','58 Verb + -ing or to … 3','59 prefer and would rather',
+                    '60 Preposition + -ing','61 be/get used to …','62 Verb + preposition + -ing','63 there\'s no point in -ing','64 to … , for … and so that …','65 Adjective + to …',
+                    '66 to … and preposition + -ing','67 see somebody do and see somebody doing','68 -ing clauses',
+                    '69 Countable and uncountable 1','70 Countable and uncountable 2','71 Countable nouns with a/an and some','72 a/an and the','73 the 1','74 the 2','75 the 3','76 the 4',
+                    '77 Names with and without the 1','78 Names with and without the 2','79 Singular and plural','80 Noun + noun','81 -\'s and of …',
+                    '82 myself/yourself/themselves etc.','83 a friend of mine','84 there … and it …','85 some and any','86 no/none/any','87 much, many, little, few','88 all / most / no / none etc.',
+                    '89 both / neither / either','90 all every whole','91 each and every',
+                    '92 Relative clauses 1','93 Relative clauses 2','94 Relative clauses 3','95 Relative clauses 4','96 Relative clauses 5','97 -ing and -ed clauses',
+                    '98 Adjectives ending in -ing and -ed','99 Adjectives: a nice new house','100 Adjectives and adverbs 1','101 Adjectives and adverbs 2',
+                    '102 so and such','103 enough and too','104 quite, pretty, rather and fairly','105 Comparative 1','106 Comparative 2','107 Comparative 3','108 Superlative',
+                    '109 Word order 1','110 Word order 2','111 still any more yet already','112 even',
+                    '113 although though even though','114 in case','115 unless as long as provided','116 as','117 like and as','118 like as if','119 during for while','120 by and until',
+                    '121 at/on/in (time)','122 on time and in time','123 in/at/on (position) 1','124 in/at/on (position) 2','125 in/at/on (position) 3',
+                    '126 to, at, in and into','127 in/on/at (other uses)','128 by','129 Noun + preposition','130 Adjective + preposition 1','131 Adjective + preposition 2',
+                    '132 Verb + preposition 1','133 Verb + preposition 2','134 Verb + preposition 3','135 Verb + preposition 4','136 Verb + preposition 5',
+                    '137 Phrasal verbs 1','138 Phrasal verbs 2','139 Phrasal verbs 3','140 Phrasal verbs 4','141 Phrasal verbs 5',
+                    '142 Phrasal verbs 6','143 Phrasal verbs 7','144 Phrasal verbs 8','145 Phrasal verbs 9'
+                ]
+            },
+            {
+                id: 'egu-sup', category: 'grammar', name: 'Grammar in Use Supplementary Exercises (Int)',
+                topics: [
+                    'Present continuous and present simple (1–10)','Past simple and past continuous (11–17)','Present and past (18–22)',
+                    'Present perfect simple and continuous (23–28)','Present perfect simple and continuous; past simple (29–30)',
+                    'Present perfect and present (31–34)','Present perfect, present and past (35–36)','Present perfect and past simple (37–42)',
+                    'Past simple, past continuous and past perfect (43–46)','Past simple, past continuous and used to (47–51)',
+                    'Present, present perfect and past (52–53)','The future: present tenses and will/shall (54–58)',
+                    'The future: present continuous, will/shall, going to (59–63)','The future: all forms (64)',
+                    'can, could and be able to (65–66)','may and might (67–68)','can, could, may, might, must and can\'t (69–72)',
+                    'must(n\'t), need(n\'t), should(n\'t) and don\'t have to (73–78)','(don\'t) have to, should(n\'t), had better (not) and ought (not) to (79–82)',
+                    'should (83–85)','Modals: review (86–87)','if I do and if I did (88–93)','if I did and if I had done (94–97)',
+                    'Conditionals: review (98–99)','I wish (100–102)','The passive (103–113)','have something done (114–115)',
+                    'Questions (116–120)','Reported speech and questions (121–131)','-ing and to ... (132–137)',
+                    'Prepositions and expressions + -ing (138–140)','I\'m used to doing and I used to do (141)',
+                    'to ... and preposition + -ing (142)','Verb forms: review (143)','Countable and uncountable (144–148)',
+                    'a/an, some and the (149–151)','the (152–154)','Quantifiers and pronouns (155–159)','Relative clauses (160–163)',
+                    'Adjectives and adverbs (164–165)','Comparatives and superlatives (166–168)','Word order (169–172)',
+                    'Prepositions of time (173–175)','Prepositions of place (176–177)','Prepositions (general) (178–179)',
+                    'Adjective/verb + preposition (180–182)','Phrasal verbs (183–200)'
+                ]
+            },
+            {
+                id: 'egu-ess', category: 'grammar', name: 'Essential Grammar in Use',
+                topics: [
+                    '1 am/is/are','2 am/is/are (вопросы)','3 I\'m scared / I\'m late / I\'m tired','4 I am doing (present continuous)',
+                    '5 are you doing? (present continuous, вопросы)','6 I do/work/like (present simple)','7 I don\'t ... (present simple, отрицания)',
+                    '8 Do you ... ? (present simple, вопросы)','9 I am doing и I do','10 I have ... и I\'ve got ...',
+                    '11 was/were','12 worked/got/went (past simple)','13 I didn\'t ... Did you ... ? (past simple)',
+                    '14 I was doing (past continuous)','15 I was doing и I did','16 I have done (present perfect 1)',
+                    '17 I\'ve just ... I\'ve already ... I haven\'t ... yet (present perfect 2)','18 Have you ever ... ? (present perfect 3)',
+                    '19 How long have you ... ? (present perfect 4)','20 for since ago','21 I have done и I did',
+                    '22 is done was done (пассив 1)','23 is being done has been done (пассив 2)','24 be/have/do в настоящем и прошедшем',
+                    '25 Правильные и неправильные глаголы','26 What are you doing tomorrow?','27 I\'m going to ...',
+                    '28 will/shall 1','29 will/shall 2','30 might','31 can и could','32 must mustn\'t don\'t need to','33 should',
+                    '34 I have to ...','35 Would you like ... ? I\'d like ...','36 Do this! Don\'t do that! Let\'s do this!',
+                    '37 I used to ...','38 there is there are','39 there was/were there has/have been there will be','40 It ...',
+                    '41 I am, I don\'t','42 Have you? Are you? Don\'t you?','43 too/either so am I / neither do I',
+                    '44 isn\'t, haven\'t, don\'t (отрицания)','45 Is it ... ? have you ... ? do they ... ? (вопросы 1)',
+                    '46 Who saw you? Who did you see? (вопросы 2)','47 Who is talking to? What is it like? (вопросы 3)',
+                    '48 What ... ? Which ... ? How ... ? (вопросы 4)','49 How long does it take ... ?',
+                    '50 Do you know where ... ? I don\'t know what ...','51 She said that ... He told me that ...',
+                    '52 work/working go/going do/doing','53 to ... (I want to do) -ing (I enjoy doing)','54 I want you to ... I told you to ...',
+                    '55 I went to the shop to ...','56 go to ... go on ... go for ... go -ing','57 get','58 do и make','59 have',
+                    '60 I/me he/him they/them','61 my/his/their','62 Whose is this? It\'s mine/yours/hers',
+                    '63 I/me/my/mine','64 myself/yourself/themselves','65 -\'s (Kate\'s camera)',
+                    '66 a/an ...','67 train(s) bus(es)','68 a bottle / some water (исчисляемые 1)','69 a cake / some cake / some cakes (исчисляемые 2)',
+                    '70 a/an и the','71 the ...','72 go to work go home go to the cinema','73 I like music I hate exams',
+                    '74 the ... (с географическими названиями)','75 this/that/these/those','76 one/ones','77 some и any',
+                    '78 not + any no none','79 not + anybody/anyone/anything nobody/no-one/nothing','80 somebody/anything/nowhere',
+                    '81 every и all','82 all most some any no/none','83 both either neither','84 a lot much many','85 (a) little (a) few',
+                    '86 old/nice/interesting (прилагательные)','87 quickly/badly/suddenly (наречия)','88 old/older expensive / more expensive',
+                    '89 older than ... more expensive than ...','90 not as ... as','91 the oldest the most expensive','92 enough','93 too',
+                    '94 He caught a big fish. (порядок слов 1)','95 always/usually/often (порядок слов 2)','96 still yet already',
+                    '97 Give me that book! Give it to me!','98 and but or so because','99 When ... If ...',
+                    '100 If I had ... If we went ...','101 a person who ... a thing that/which ... (relative clauses 1)',
+                    '102 the people we met the hotel you stayed at (relative clauses 2)','103 at 8 o\'clock on Monday in April',
+                    '104 from ... to until since for','105 before after during while','106 in at on (предлоги места 1)',
+                    '107 in at on (предлоги места 2)','108 to in at (предлоги места 3)','109 under, behind, opposite',
+                    '110 up, over, through','111 on at by with about','112 full of ... good at ... + -ing','113 listen to ... look at ...',
+                    '114 go in, fall off, run away (phrasal verbs 1)','115 put on your shoes put your shoes on (phrasal verbs 2)'
+                ]
+            },
+            {
+                id: 'oegc-basic', category: 'grammar', name: 'Oxford English Grammar Course Basic',
+                sections: [
+                    { name: 'Section 1: be and have', topics: ['be: I am happy today','be: past','be: future','there is/was','there is: future','have','have: past and future','have: actions','have without do: have got','be and have: more practice','be and have: revision test'] },
+                    { name: 'Section 2: present tenses', topics: ['simple present affirmative','simple present: use','simple present negatives','simple present questions','simple present: more practice','present progressive: forms','present progressive: use','present progressive negatives','present progressive questions','present progressive: more practice','the two present tenses: the difference','non-progressive verbs','present tenses: more practice','present tenses: revision test'] },
+                    { name: 'Section 3: talking about the future', topics: ['going to','present progressive','will: predicting','will: deciding, refusing, promising','simple present for future','future: more practice','future: revision test'] },
+                    { name: 'Section 4: past tenses', topics: ['simple past: forms','simple past: use','simple past: negatives','simple past questions','simple past: more practice','past progressive','simple past or past progressive?','past tenses: more practice','past tenses: revision test'] },
+                    { name: 'Section 5: perfect tenses', topics: ['present perfect: forms','finished actions: present perfect or simple past?','time words: present perfect or simple past?','already, yet and just','since and for','present perfect progressive','past perfect','perfect tenses: more practice','perfect tenses: revision test'] },
+                    { name: 'Section 6: modal verbs', topics: ['modal verbs: introduction','must','have to','mustn\'t and don\'t have to','had to, will have to','should','can','could; be able to','may and might','can, could and may: permission','can/could you?: requests','shall in questions','would','used to','modal verbs: more practice','modal verbs: revision test'] },
+                    { name: 'Section 7: passives', topics: ['passives: introduction','simple present passive','future passive','simple past passive','present progressive passive','present perfect passive','passives: more practice','passives: revision test'] },
+                    { name: 'Section 8: questions and negatives', topics: ['yes/no questions','question words','question-word subjects','questions with long subjects','prepositions in questions','negatives','not and no','negatives with nobody, never etc','questions and negatives: more practice','questions and negatives: revision test'] },
+                    { name: 'Section 9: infinitives and -ing forms', topics: ['infinitives: using to','infinitive of purpose','verb + infinitive','verb + object + infinitive','it with infinitive subjects','adjective + infinitive','adjectives with enough/to + infinitive','noun/pronoun + infinitive','-ing forms as subjects','preposition + ...ing','verb + ...ing','infinitives and -ing forms: more practice','infinitives and -ing forms: revision test'] },
+                    { name: 'Section 10: special structures with verbs', topics: ['structures with get','verbs with prepositions','phrasal verbs','verbs with two objects','have something done','imperatives','let\'s (suggestions)','special structures with verbs: more practice','special structures with verbs: revision test'] },
+                    { name: 'Section 11: articles: a/an and the', topics: ['a/an; pronunciation of the','countable and uncountable','the and a/an','a/an','a/an: describing people','talking in general without the','names','special cases','articles: more practice','articles: revision test'] },
+                    { name: 'Section 12: determiners', topics: ['this, that, these and those','some and any','somebody, anything, nowhere','much and many','a lot of and lots of','a little and a few','enough money; fast enough','too, too much/many and not enough','all','all and every; each','both, either and neither','determiners and of','determiners: more practice','determiners: revision test'] },
+                    { name: 'Section 13: personal pronouns; possessives', topics: ['personal pronouns: I and me etc','possessives: my, your etc','possessives: mine, yours etc','reflexive pronouns: myself, yourself etc','personal pronouns and possessives: more practice','personal pronouns and possessives: revision test'] },
+                    { name: 'Section 14: nouns', topics: ['singular and plural nouns','singular/plural team, family; jeans, scissors','countable and uncountable nouns','one and ones','s and \'s possessive: forms','s and \'s possessive: use','noun + noun','nouns: more practice','nouns: revision test'] },
+                    { name: 'Section 15: adjectives and adverbs', topics: ['adjectives','adverbs of manner','other adverbs','adverbs with the verb','interested and interesting etc','fast, hard, hardly, well, friendly','adjectives and adverbs: more practice','adjectives and adverbs: revision test'] },
+                    { name: 'Section 16: comparison', topics: ['comparative and superlative adjectives: forms','comparative or superlative?','comparatives: use','superlatives','comparison of adverbs','(not) as ... as','comparison: more practice','comparison: revision test'] },
+                    { name: 'Section 17: conjunctions', topics: ['conjunctions: introduction','position of conjunctions','tenses with time conjunctions','because and so; although and but','and','double conjunctions','conjunctions: more practice','conjunctions: revision test'] },
+                    { name: 'Section 18: if', topics: ['if: position; unless','if: future','not real / not probable','if I were you','If I go, I will ...; If I went, I would ...','unreal past','if: more practice','if: revision test'] },
+                    { name: 'Section 19: relative pronouns', topics: ['relative who and which','relative that','leaving out relative pronouns','prepositions','relative what','relative pronouns: more practice','relative pronouns: revision test'] },
+                    { name: 'Section 20: indirect speech', topics: ['tenses and pronouns','indirect questions','present reporting verbs','here and now > there and then','infinitives','indirect speech: more practice','indirect speech: revision test'] },
+                    { name: 'Section 21: prepositions', topics: ['at, in and on (time)','from ... to, until and by','for, during and while','in and on (place)','at (place)','other prepositions of place','prepositions of movement','prepositions: more practice','prepositions: revision test'] },
+                    { name: 'Section 22: spoken grammar', topics: ['question tags','short answers','reply questions','revision of spoken question and answer structures','leaving out words','so am I; nor do I etc','spoken grammar: more practice','spoken grammar: revision test'] }
+                ]
+            },
+            {
+                id: 'oegc-int', category: 'grammar', name: 'Oxford English Grammar Course Intermediate',
+                sections: [
+                    { name: 'Section 1: be and have', topics: ['revise the basics: be and have','revise the basics: there is/was etc','more about there is','have with got and do','habitual and repeated actions','have for actions','be and have: more practice','be and have: revision test'] },
+                    { name: 'Section 2: present tenses', topics: ['revise the basics: which present tense?','revise the basics: spelling','present progressive for changes','simple present: instructions etc','non-progressive verbs','present tenses: more practice','present tenses: revision test'] },
+                    { name: 'Section 3: talking about the future', topics: ['revise the basics: going to','revise the basics: present progressive for future','revise the basics: will–future','will in decisions, promises etc','which future? will, going to or present progressive?','simple present','future progressive','be + infinitive','future in the past','future perfect','talking about the future: more practice','talking about the future: revision test'] },
+                    { name: 'Section 4: past tenses', topics: ['revise the basics: simple past forms','revise the basics: which past tense?','more about past tenses','past tenses in requests etc','past tenses: more practice','past tenses: revision test'] },
+                    { name: 'Section 5: perfect tenses', topics: ['revise the basics: present perfect forms and use','revise the basics: present perfect or simple past?','revise the basics: tenses with time words','revise the basics: already, yet and just','finished time or up to now?','news','news and details','revise the basics: present perfect progressive; since, for','present perfect or present perfect progressive?','simple past and present perfect: summary','revise the basics: past perfect','more about the past perfect','past perfect progressive','This is the first time etc','perfect tenses: more practice','perfect tenses: revision test','all past and perfect tenses: revision test'] },
+                    { name: 'Section 6: modal verbs', topics: ['revise the basics: the grammar of modals','revise the basics: must, should and ought to','have to and must','must not; do not have to; do not need to / needn\'t','had better','supposed to','must/can\'t: certainty','may and might','revise the basics: permission, requests etc','shall in questions','can and could (ability): past and future','revise the basics: used to','will and would: typical behaviour','perfect modal verbs: should have ...','perfect modal verbs: may have ...; must have ...','perfect modal verbs: could have ...; needn\'t have ...','modal verbs: more practice','modal verbs: revision test'] },
+                    { name: 'Section 7: passives', topics: ['revise the basics: active and passive','passive infinitives and -ing forms','passives: verbs with two objects','prepositions with passives','reasons for using passives','passives: more practice','passives: revision test'] },
+                    { name: 'Section 8: questions and negatives', topics: ['revise the basics: questions','question-word subjects','prepositions in questions','revise the basics: negatives','negative questions','questions and negatives: more practice','questions and negatives: revision test'] },
+                    { name: 'Section 9: infinitives and -ing forms', topics: ['revise the basics: infinitive with and without to','revise the basics: infinitive of purpose','revise the basics: verb + infinitive or -ing form','revise the basics: preposition + -ing form','more about infinitives: to sit, to be sitting','perfect infinitives: to have gone etc','to for whole infinitive','-ing forms as subjects, objects etc','more about verb + infinitive or -ing form','go ...ing','-ing form and infinitive both possible','verb + object + infinitive','adjective + infinitive or -ing form','noun + infinitive or -ing form','more about noun/pronoun + infinitive','for ... to ...','more about adjective + infinitive','before, after, since, by and for + -ing','to ...ing','infinitives and -ing forms: more practice','infinitives and -ing forms: revision test'] },
+                    { name: 'Section 10: various structures with verbs', topics: ['revise the basics: imperatives; let\'s','revise the basics: verbs with two objects','revise the basics: causative have and get','exclamations','do: emphatic auxiliary','it: preparatory subject','emphasis with it and what','phrasal verbs','various structures with verbs: more practice','various structures with verbs: revision test'] },
+                    { name: 'Section 11: articles: a/an and the', topics: ['revise the basics: a/an and one','revise the basics: a/an (1)','revise the basics: a/an (2)','revise the basics: the','revise the basics: generalisations without the','the in generalisations','place names','other special cases','articles: more practice','articles: revision test'] },
+                    { name: 'Section 12: determiners', topics: ['revise the basics: this, that, these, those','revise the basics: some and any','some/any or no article','any, not any, no and none','any = \'one or the other\'','revise the basics: much, many, a lot (of)','revise the basics: enough, too and too much','revise the basics: (a) little, (a) few','less and least, fewer and fewest','revise the basics: all','revise the basics: all, every, everybody, everything','every and each; every one','both, either and neither','which? and what?','other(s) and another','determiners and of','determiners: more practice','determiners: revision test'] },
+                    { name: 'Section 13: personal pronouns and possessives', topics: ['revise the basics: I, me, my, mine etc','possessives','personal pronouns','reflexives','you, one and they','personal pronouns and possessives: more practice','personal pronouns and possessives: revision test'] },
+                    { name: 'Section 14: nouns', topics: ['revise the basics: countable and uncountable nouns','more about countable and uncountable nouns','revise the basics: how to spell plurals','plurals of nouns: special cases','mixed singular and plural','revise the basics: possessive \'s','possessive \'s or of ...','revise the basics: noun + noun','noun + noun or preposition','one(s)','nouns: more practice','nouns: revision test'] },
+                    { name: 'Section 15: adjectives and adverbs', topics: ['revise the basics: adjectives, adverbs of manner','interested and interesting etc','adjectives without nouns','order of adjectives','adverbs with the verb','even and only; end-position adverbs','confusing adjectives and adverbs','adjectives and adverbs: more practice','adjectives and adverbs: revision test'] },
+                    { name: 'Section 16: comparison', topics: ['revise the basics: comparative and superlative adjectives','revise the basics: comparative and superlative adverbs','as ... as','more on comparatives','more about superlatives','like and as; so and such','comparison: more practice','comparison: revision test'] },
+                    { name: 'Section 17: conjunctions', topics: ['revise the basics: use and position of conjunctions','revise the basics: present for future','using certain conjunctions: so that, as long as, until etc','leaving out that','both ... and; (n)either ... (n)or','perfect for completion','tenses with since and for','conjunction + -ing or -ed','clauses without conjunctions','conjunctions: more practice','conjunctions: revision test'] },
+                    { name: 'Section 18: if etc', topics: ['revise the basics: ordinary tense use','revise the basics: If I had a million dollars','revise the basics: if I go and if I went','could = \'would be able to\'','unreal past situations','unless','if only and I wish: tenses','in case','it\'s time and I\'d rather: tenses','if etc: more practice','if etc: revision test'] },
+                    { name: 'Section 19: relatives', topics: ['revise the basics: who(m), which and that','revise the basics: leaving out relative pronouns','what = \'the thing(s) that\'','whose','prepositions in relative clauses','reduced relative clauses','non-identifying relative clauses','reading sentences with relative clauses','relatives: more practice','relatives: revision test'] },
+                    { name: 'Section 20: indirect speech', topics: ['revise the basics: why things change','revise the basics: \'here\' and \'now\' words','revise the basics: tenses','present situations','revise the basics: indirect questions','revise the basics: infinitives','indirect speech: special cases','indirect speech: more practice','indirect speech: revision test'] },
+                    { name: 'Section 21: prepositions', topics: ['revise the basics: time','revise the basics: place and movement','some preposition choices','verbs with prepositions','nouns with prepositions','adjectives with prepositions','expressions beginning with prepositions','prepositions: more practice','prepositions: revision test'] },
+                    { name: 'Section 22: spoken grammar', topics: ['spoken sentence structure','dropping sentence beginnings','dropping words after auxiliaries','revise the basics: question tags','more about question tags','revise the basics: short answers and reply questions','revise the basics: so am I etc','structures with so and not','spoken grammar: more practice','spoken grammar: revision test'] }
+                ]
+            },
+            
+            // ===== ЛЕКСИКА =====
+            {
+                id: 'evu', category: 'vocab', name: 'English Vocabulary in Use (Pre-Int & Int)',
+                topics: [
+                    '5 Country, nationality and language','6 The physical world','7 Weather','8 Animals and insects',
+                    '9 The body and movement','10 Describing appearance','11 Describing character','12 Feelings',
+                    '13 Family and friends','14 Growing up','15 Romance, marriage and divorce',
+                    '16 Daily routines','17 The place where you live','18 Around the home','19 Money','20 Health',
+                    '21 Clothes','22 Fashion and buying clothes','23 Shopping','24 Food','25 Cooking',
+                    '26 City life','27 Life in the country','28 Transport','29 On the road','30 Notices and warnings',
+                    '31 Classroom language','32 School education','33 Studying English and taking exams','34 University education',
+                    '35 Jobs','36 Talking about your work','37 Making a career','38 Working in an office','39 Running a company','40 Business and finance',
+                    '41 Sport and leisure','42 Competitive sport','43 Books and films','44 Music','45 Special events',
+                    '46 Travel bookings','47 Air travel','48 Hotels and restaurants','49 Cafés','50 Sightseeing holidays','51 Holidays by the sea',
+                    '52 Newspapers and television','53 Phoning and texting','54 Computers','55 Email and the Internet',
+                    '56 Crime','57 Politics','58 Climate change','59 War and violence',
+                    '60 Time','61 Numbers','62 Distance, dimensions and size','63 Objects, materials, shapes and colour','64 Containers and quantities',
+                    '65 Apologies, excuses and thanks','66 Requests, permission and suggestions','67 Opinions, agreeing and disagreeing','68 Likes, dislikes, attitudes and preferences','69 Greetings, farewells and special expressions',
+                    '70 Prefixes: changing meaning','71 Suffixes: forming nouns','72 Suffixes: forming adjectives','73 Compound nouns',
+                    '74 Word partners','75 Fixed phrases','76 Fixed phrases in conversation','77 Verb or adjective + preposition','78 Prepositional phrases','79 Phrasal verbs 1: form and meaning','80 Phrasal verbs 2: grammar and style',
+                    '81 Make, do and take','82 Key verbs: give, keep and miss','83 Get: uses, phrases and phrasal verbs','84 Go: meanings and expressions','85 The senses',
+                    '86 Uncountable nouns','87 Verb constructions 1','88 Verb constructions 2','89 Adjectives','90 Prepositions: place and movement','91 Adverbs',
+                    '92 Time and sequence','93 Addition and contrast','94 Reason, purpose, result, condition',
+                    '95 Formal and informal English','96 Completing forms and CVs','97 Writing an essay','98 Formal letters and emails','99 Informal emails and messages','100 Abbreviations'
+                ]
+            },
+            {
+                id: 'eci', category: 'vocab', name: 'English Collocations in Use (Int)',
+                topics: [
+                    '6 Intensifying adverbs','7 Everyday verbs 1','8 Everyday verbs 2','9 Everyday verbs 3',
+                    '10 Synonyms and confusable words 1','11 Synonyms and confusable words 2','12 Metaphor',
+                    '13 Weather','14 Travel','15 Countryside','16 Towns and cities',
+                    '17 People: character and behaviour','18 People: physical appearance','19 Families','20 Relationships',
+                    '21 Houses, flats and rooms','22 Eating and drinking','23 Films and books','24 Music','25 Sport','26 Health and illness',
+                    '27 Using the Internet','28 Study and learning','29 Presentations','30 Work','31 Business','32 Academic writing 1','33 Academic writing 2',
+                    '34 Laws and punishments','35 Crime','36 News','37 Money','38 War and peace','39 Global problem',
+                    '40 Time','41 Sound','42 Distance and size','43 Colour and light','44 Texture','45 Taste and smell',
+                    '46 Number and frequency','47 Movement and speed','48 Change','49 Ways of speaking','50 Ways of walking',
+                    '51 Starting and finishing','52 Talking about success and failure','53 Talking about cause and effect',
+                    '54 Remembering and sensing','55 Agreeing and disagreeing','56 Talking about beliefs and opinions',
+                    '57 Deciding and choosing','58 Claiming and denying','59 Liking and disliking','60 Praising and criticising'
+                ]
+            },
+            {
+                id: 'epv', category: 'vocab', name: 'English Phrasal Verbs in Use (Int)',
+                topics: [
+                    '6 Come','7 Get','8 Go','9 Look','10 Make','11 Put','12 Take',
+                    '13 Up','14 Out','15 Off','16 On and in','17 Down and over','18 Around and about','19 For and with','20 Through and back','21 Into and away',
+                    '22 Time: spending time','23 Time: passing of time','24 Location','25 Cause and effect','26 Change',
+                    '27 Success and failure','28 Starting and finishing','29 Actions and movement','30 Destroying and reacting','31 Communication',
+                    '32 Describing people and places','33 Describing public events','34 Describing situations','35 Giving and getting information',
+                    '36 Solving problems','37 Decisions and plans','38 Disagreeing','39 Persuading','40 Praising and criticising','41 Exclamations and warnings',
+                    '42 The classroom and learning','43 Student life: courses and exams','44 Student life: reading and writing',
+                    '45 Work: jobs and career','46 Work: being busy','47 Money: salaries, bills, payments','48 Money: buying and selling','49 Business','50 Calling people',
+                    '51 Feelings','52 Relationships','53 Relationships: problems','54 Secrets and conversations','55 Stages through life',
+                    '56 Health','57 Sport','58 Homes and daily routines','59 Socialising','60 Food and drink',
+                    '61 Weather','62 Travel','63 Driving and cycling','64 Mobile devices','65 Computers','66 News','67 Crime',
+                    '68 Power and authority','69 American and Australian phrasal verbs','70 Academic writing'
+                ]
+            },
+            {
+                id: 'eii', category: 'vocab', name: 'English Idioms in Use (Int)',
+                topics: [
+                    '3 Happiness and sadness','4 Anger','5 Knowing and understanding','6 Experience and perception',
+                    '7 Success and failure','8 Having problems','9 Dealing with problems','10 Power and authority',
+                    '11 Structuring and talking about arguments','12 Conversational responses','13 Praise and criticism',
+                    '14 Opinions on people and actions','15 Behaviour and attitudes','16 Reacting to what others say',
+                    '17 Danger','18 Effort','19 Necessity and desirability','20 Probability and luck','21 Social status',
+                    '22 Human relationships','23 Size and position','24 Money','25 Work','26 Speed, distance and intensity',
+                    '27 Communication 1','28 Communication 2','29 Life and experience: proverbs','30 Memory',
+                    '31 Time 1','32 Time 2','33 The elements','34 Colour','35 Clothes','36 Games and sport',
+                    '37 Animals 1','38 Animals 2','39 Weapons and war','40 Food','41 Roads','42 Houses and household objects',
+                    '43 Nature','44 Boats and sailing','45 Science, technology and machines','46 Music and theatre',
+                    '47 Finger, thumb, hand','48 Foot, heel, toe','49 Bones, shoulder, arm, leg','50 Head',
+                    '51 Face, hair, neck, chest','52 Eyes','53 Ear, lips, mouth, nose, teeth, tongue','54 Heart',
+                    '55 Brain, mind, blood and guts','56 Back','57 Long','58 Line','59 Act, action, activity',
+                    '60 Good and bad','61 Ground','62 Similes and idioms with like and as'
+                ]
+            },
+            {
+                id: 'viu-elem', category: 'vocab', name: 'Vocabulary in Use Elementary',
+                topics: [
+                    '1 The family','2 Birth, marriage and death','3 Parts of the body','4 Clothes','5 Describing people',
+                    '6 Health and illness','7 Feelings','8 Conversations 1: Greetings and wishes','9 Conversations 2: Useful words and expressions',
+                    '10 Food and drink','11 In the kitchen','12 In the bedroom and bathroom','13 In the living room',
+                    '14 Jobs','15 At school and university','16 Communications','17 Your phone','18 Holidays',
+                    '19 Shops and shopping','20 Online shopping','21 In a hotel','22 Eating out','23 Sports',
+                    '24 Cinema','25 Free time at home','26 Music and musical instruments','27 Countries and nationalities',
+                    '28 Weather','29 In the town','30 In the countryside','31 Animals','32 Travelling',
+                    '33 UK culture','34 Crime','35 The media','36 Problems at home and work','37 Global problems',
+                    '38 Have / had / had','39 Go / went / gone','40 Do / did / done','41 Make / made / made',
+                    '42 Come / came / come','43 Take / took / taken','44 Bring / brought / brought','45 Get / got / got',
+                    '46 Phrasal verbs','47 Everyday things','48 Talking','49 Moving','50 Conjunctions and connecting words',
+                    '51 Days, months, seasons','52 Time words','53 Places','54 Manner','55 Common uncountable nouns',
+                    '56 Common adjectives: Good and bad things','57 Words and prepositions','58 Prefixes','59 Suffixes','60 Words you may confuse'
+                ]
+            },
+            {
+                id: 'ows-elem', category: 'vocab', name: 'Oxford Word Skills Elementary',
+                topics: [
+                    '1 Classroom vocabulary','2 Grammar words','3 Using this book','4 Learning new words','5 Classroom activities',
+                    '6 Numbers','7 Telling the time','8 Days, seasons and dates','9 Time words and phrases','10 Parts of the body',
+                    '11 Describing people','12 Physical actions','13 Personal information','14 Family','15 Personality',
+                    '16 Relationships','17 Feelings','18 Prepositions: time','19 Prepositions: direction','20 Prepositions: place',
+                    '21 Prepositions: phrases','22 Word + preposition','23 Routines','24 Clothes','25 Accessories',
+                    '26 Colours, size and appearance','27 Money','28 Shopping','29 Possessions','30 Crime',
+                    '31 Illness','32 Injuries','33 Geography','34 The environment','35 Countries and nationalities',
+                    '36 My country','37 Weather','38 Animals, insects and birds','39 Irregular verbs','40 have got and have',
+                    '41 make or do','42 get','43 see','44 Verbs and nouns with the same form','45 Shopping for food',
+                    '46 Fruit and vegetables','47 Meat and fish','48 A restaurant table','49 Eating in a restaurant','50 In a café',
+                    '51 Vehicles and roads','52 Buses','53 Trains','54 Directions','55 Signs and notices',
+                    '56 My town','57 The countryside','58 Home','59 Kitchen','60 Bedroom and bathroom',
+                    '61 Living room','62 Adjectives with prefixes','63 Adjective opposites','64 Common adverbs','65 Adverbs of manner',
+                    '66 School subjects','67 The education system','68 University','69 Jobs','70 Describing jobs',
+                    '71 Job interview','72 First day at work','73 Computers','74 Email, letters and the internet','75 Phoning',
+                    '76 -er / -or / -r nouns','77 -ing forms','78 Noun suffixes','79 Compound nouns','80 Likes and dislikes',
+                    '81 Free time','82 Sport','83 Music','84 Films','85 The media',
+                    '86 Books','87 Arranging a holiday','88 Hotels','89 Airports','90 Types of holiday',
+                    '91 Meet and greet','92 Ask for information','93 Requests and permission','94 Invitations and suggestions','95 Offers and saying sorry',
+                    '96 Probably or possibly','97 Link words 1','98 Link words 2','99 Phrasal verbs','100 Common expressions'
+                ]
+            },
+            {
+                id: 'ows-int', category: 'vocab', name: 'Oxford Word Skills Intermediate',
+                topics: [
+                    '1 Vocabulary learning','2 Progress and aims','3 Using an English dictionary','4 English punctuation','5 The body',
+                    '6 Appearance','7 Character','8 Feelings and emotions','9 Personal qualities','10 Friendship',
+                    '11 Families','12 Marriage and divorce','13 Geography','14 The universe and science','15 Weather conditions',
+                    '16 Climate change','17 Saving the environment','18 Animals, insects and birds','19 Adjectives (1)','20 Adjectives (2): opposites',
+                    '21 Adverbs (1): degree and frequency','22 Adverbs (2): emphasizing and manner','23 Fruit, vegetables and herbs','24 Containers and quantities','25 Cooking',
+                    '26 Shopping','27 Clothing','28 Fashion','29 Illness and accidents','30 Hospital',
+                    '31 Roads','32 Driving','33 Trains and buses','34 Air travel','35 Holidays',
+                    '36 Verb + preposition','37 Noun + preposition','38 Prepositions in time phrases','39 Adjective + preposition','40 Prepositional phrases',
+                    '41 Describing objects','42 Household tasks','43 Buildings','44 How to grow something','45 Shapes and lines',
+                    '46 A painting','47 The five senses','48 Crime','49 The justice system','50 Health issues',
+                    '51 Politics','52 War and peace','53 Events in history','54 Social issues','55 Irregular verbs',
+                    '56 Verb + infinitive or -ing form','57 Using verbs with reflexive pronouns','58 take','59 Art','60 Films',
+                    '61 Theatre','62 Music','63 TV and online viewing','64 Newspapers','65 Books',
+                    '66 Sporting events','67 Sport: people and places','68 Festivals','69 The internet','70 Email and social media',
+                    '71 Word building: prefixes','72 Word building: suffixes','73 Link words','74 School','75 Academic life',
+                    '76 Student life','77 Describing jobs','78 Careers','79 Applying for a job','80 Finance',
+                    '81 Running a business','82 Marketing','83 Phrasal verbs (1): grammatical patterns','84 Phrasal verbs (2): meaning','85 Expressions (1)',
+                    '86 Expressions (2)','87 Likes, dislikes and preferences','88 Probability','89 Similarities and differences','90 Pleasure and annoyance',
+                    '91 Making arrangements','92 Warnings','93 Opinions','94 Hopes and plans','95 Obligation',
+                    '96 Asking for permission','97 Formal and informal English','98 Write a letter or email','99 Abbreviations and short forms','100 American English'
+                ]
+            },
+            {
+                id: 'tyviu', category: 'vocab', name: 'Test Your Vocabulary in Use (Pre-Int & Int)',
+                topics: [
+                    'Tests 1–3 Learning and recording vocabulary','Test 4 English language words','Test 5 Problems with pronunciation','Test 6 Classroom language',
+                    'Test 7 Prefixes','Test 8 Noun suffixes','Test 9 Adjective suffixes','Test 10 Nouns, verbs and adjectives with the same form',
+                    'Test 11 Compound nouns','Test 12 Compound adjectives','Test 13 Collocation (word partners)','Test 14 Verb or adjective + preposition',
+                    'Test 15 Preposition + noun','Test 16 Phrasal verbs 1','Test 17 Phrasal verbs 2','Test 18 Idioms and fixed expressions',
+                    'Test 19 Make, do, have, take','Test 20 Give, keep, break, catch, see','Test 21 Get: uses and expressions','Test 22 Go: uses and expressions',
+                    'Test 23 Apologies, excuses and thanks','Test 24 Requests, invitations and suggestions','Test 25 Opinions, agreeing and disagreeing','Test 26 Specific situations and special occasions',
+                    'Test 27 Uncountable nouns and plural nouns','Test 28 Verbs + -ing form or infinitive','Test 29 Verb patterns','Test 30 Adjectives',
+                    'Test 31 Prepositions: place','Test 32 Adverbs: frequency and degree','Test 33 Time and sequence','Test 34 Addition and contrast',
+                    'Test 35 Similarities, differences and conditions','Test 36 Reason, purpose and result','Test 37 The physical world','Test 38 Weather',
+                    'Test 39 Using the land','Test 40 Animals and insects','Test 41 Countries, nationalities and languages','Test 42 The body and what it does',
+                    'Test 43 Describing people\'s appearance','Test 44 Describing character','Test 45 Human feelings and actions','Test 46 Family and friends',
+                    'Test 47 Ages and stages','Test 48 Daily routines','Test 49 Homes and buildings','Test 50 Around the home 1',
+                    'Test 51 Around the home 2','Test 52 Everyday problems','Test 53 Money','Test 54 Health: illness and disease',
+                    'Test 55 Health: injuries','Test 56 Clothes','Test 57 Shops and shopping','Test 58 Food',
+                    'Test 59 Cooking and restaurants','Test 60 Town and country','Test 61 On the road','Test 62 Transport',
+                    'Test 63 Work: duties, conditions and pay','Test 64 Jobs','Test 65 The career ladder','Test 66 In the office and in the factory',
+                    'Test 67 Business and finance','Test 68 Sales and marketing','Test 69 Hobbies','Test 70 Sport 1: games, people and places',
+                    'Test 71 Sport 2: winning, losing and scoring','Test 72 Cinema and theatre','Test 73 Music, art and literature','Test 74 Newspapers',
+                    'Test 75 Television','Test 76 On the phone','Test 77 Computers','Test 78 Education: school',
+                    'Test 79 Education: university','Test 80 Law and order','Test 81 Crime','Test 82 Politics',
+                    'Test 83 Bureaucracy','Test 84 War and peace','Test 85 Pollution and the environment','Test 86 Air travel',
+                    'Test 87 Hotels','Test 88 A sightseeing holiday','Test 89 On the beach and in the country','Test 90 Time',
+                    'Test 91 Numbers','Test 92 Distance, size and dimension','Test 93 Shapes, colours and patterns','Test 94 Partitives',
+                    'Test 95 The senses','Test 96 Notices and warnings','Test 97 Vague language','Test 98 American English',
+                    'Test 99 Formal and informal English','Test 100 Abbreviations and abbreviated words'
+                ]
+            },
+            {
+                id: 'kwf-preint', category: 'vocab', name: 'Key Words for Fluency Pre-Int',
+                sections: [
+                    { name: 'Section 1: Your house', topics: ['house','stairs','room','floor','carpet','wall','ceiling','door','light','window','heating','Test 1'] },
+                    { name: 'Section 2: Rooms and furniture', topics: ['table','drawer','chair','mirror','bed','sheet','blanket','pillow','mattress','wardrobe','alarm','curtains','bath','shower','towel','toilet','Test 2'] },
+                    { name: 'Section 3: In the kitchen', topics: ['kettle','cooker','oven','freezer','dishwasher','washing machine','grill','fridge','toaster','knife','fork','spoon','cupboard','shelf','pot','pan','plate','bowl','sink','dishes','Test 3'] },
+                    { name: 'Section 4: Sky and weather', topics: ['sky','sun','moon','star','rain','thunder','lightning','cloud','snow','ice','wind','fog','Test 4'] },
+                    { name: 'Section 5: The natural world', topics: ['sea','wave','river','island','beach','sand','mountain','forest','field','ground','Test 5'] },
+                    { name: 'Section 6: Animals and plants', topics: ['animal','bird','fish','pet','cat','dog','plant','crop','flower','grass','tree','garden','fence','gate','Test 6'] },
+                    { name: 'Section 7: Transport', topics: ['car','bus','petrol','plane','airport','train','taxi','ferry','bike','lorry','Test 7'] },
+                    { name: 'Section 8: Travel', topics: ['road','journey','driver','licence','tourist','tour','ticket','queue','seat','Test 8'] },
+                    { name: 'Section 9: Meals and eating out', topics: ['breakfast','lunch','dinner','restaurant','waiter','waitress','bill','bar','service','menu','table','Test 9'] },
+                    { name: 'Section 10: Drink', topics: ['coffee','tea','beer','wine','bottle','glass','cup','Test 10'] },
+                    { name: 'Section 11: Shopping and food 1', topics: ['shop','supermarket','customer','meat','chicken','fish','oil','egg','milk','cheese','vegetables','fruit','Test 11'] },
+                    { name: 'Section 12: Food 2', topics: ['bread','sandwich','cake','biscuit','pasta','rice','potatoes','chips','chocolate','sugar','salt','Test 12'] },
+                    { name: 'Section 13: Your body', topics: ['body','muscle','skin','stomach','waist','back','arm','wrist','leg','finger','nail','toe','knee','foot','Test 13'] },
+                    { name: 'Section 14: Head and shoulders', topics: ['hair','beard','moustache','face','mouth','tooth','tongue','lips','kiss','smile','throat','ear','nose','neck','shoulders','Test 14'] },
+                    { name: 'Section 15: Clothes', topics: ['trousers','shirt','tie','sweater','dress','coat','hat','uniform','scarf','gloves','sock','shoe','Test 15'] },
+                    { name: 'Section 16: Personal items', topics: ['pocket','belt','button','zip','bag','wallet','card','key','ring','glasses','lenses','umbrella','watch','Test 16'] },
+                    { name: 'Section 17: The family', topics: ['parent','child / children','wedding','husband','wife','funeral','baby','birth','birthday','present','Test 17'] },
+                    { name: 'Section 18: Health and sport', topics: ['hospital','doctor','headache','cough','cold','virus','medicine','pill','injection','blood','bandage','stitches','x-ray','ball','football','score','result','player','Test 18'] },
+                    { name: 'Section 19: Education', topics: ['school','teacher','student','class','lesson','test','book','page','Test 19'] },
+                    { name: 'Section 20: Reading and writing', topics: ['newspaper','magazine','pen','pencil','paper','form','envelope','stamp','address','parcel','package','Test 20'] },
+                    { name: 'Section 21: Work and entertainment', topics: ['office','manager','secretary','factory','employer','employee','employment','police','soldier','museum','art gallery','cinema','theatre','show','play','actor','Test 21'] },
+                    { name: 'Section 22: Technology and time', topics: ['phone / telephone','call','camera','photograph / photo','video / DVD','minute','hour','week','month','year','Test 22'] }
+                ]
+            },
+            {
+                id: 'kwf-int', category: 'vocab', name: 'Key Words for Fluency Int',
+                sections: [
+                    { name: 'Section 1: A place to live', topics: ['world','country','home','building','accommodation and rent'] },
+                    { name: 'Section 2: The environment', topics: ['environment','pollution, fumes, waste and rubbish','earthquake and flood','storm','damage'] },
+                    { name: 'Section 3: The natural world', topics: ['weather','heat and temperature','air','light','fire','water','noise and silence'] },
+                    { name: 'Section 4: Work', topics: ['job','career','staff and duty','qualification and interview','skill','training','wage, salary and pay'] },
+                    { name: 'Section 5: Travel', topics: ['trip','holiday','flight','delay and destination','passenger','passport and visa','luggage and fare'] },
+                    { name: 'Section 6: Traffic', topics: ['traffic','street','route and map','accident','injury'] },
+                    { name: 'Section 7: Education', topics: ['education','course','lesson','practise and homework','exam and mark'] },
+                    { name: 'Section 8: Sport and fitness', topics: ['sport','team','game','race, competition and match','victory','defeat','prize','strength','energy and exercise'] },
+                    { name: 'Section 9: Health', topics: ['health','illness','disease and infection','stress','smoking and drugs (illegal)','pain','appointment, symptom and test','treatment and cure','operation and drug'] },
+                    { name: 'Section 10: Money', topics: ['money and cash','savings, fortune and debt','price','fee and charge','expense'] },
+                    { name: 'Section 11: Food', topics: ['food','drink','meal and dish','diet and appetite','party'] },
+                    { name: 'Section 12: Fun and entertainment', topics: ['fun and entertainment','joke','television and programme','concert','fan and audience','film','music and song'] },
+                    { name: 'Section 13: People', topics: ['life','death','age','character','clothes and fashion','appearance','habit and routine'] },
+                    { name: 'Section 14: Relationships', topics: ['friend','enemy','marriage','divorce','love','respect','family'] },
+                    { name: 'Section 15: The body and the senses', topics: ['head','hand','heart','eye','sight','view','smell','taste','voice','breath','sleep and dream'] },
+                    { name: 'Section 16: Feeling and mood', topics: ['feeling','mood','happiness and pleasure','anger','fear and anxiety','worry','confidence','disappointment and relief','surprise and shock'] },
+                    { name: 'Section 17: Society', topics: ['government and election','vote','society','justice','law'] },
+                    { name: 'Section 18: Crime and punishment', topics: ['crime and criminal','offence, offender and victim','arrest and charge (criminal)','evidence','trial and verdict','sentence and fine','punishment and prison'] },
+                    { name: 'Section 19: Conflict', topics: ['war','peace','attack','defence','bomb and explosion','casualty','weapon and gun','dispute and strike','campaign and demonstration'] },
+                    { name: 'Section 20: Communication', topics: ['language','conversation','discussion','speech','secret, rumour and lie'] },
+                    { name: 'Section 21: Information', topics: ['news','message','document','article','letter','mail','advert, publicity and reputation'] },
+                    { name: 'Section 22: Technology', topics: ['machine','equipment','computer and internet','fault','repair'] }
+                ]
+            },
+            {
+                id: 'ielts-vocab', category: 'vocab', name: 'Vocabulary for IELTS',
+                topics: [
+                    'Unit 1 Growing up','Unit 2 Mental and physical development','Unit 3 Keeping fit','Unit 4 Lifestyles','Unit 5 Student life','Test One',
+                    'Unit 6 Effective communication','Unit 7 On the move','Unit 8 Through the ages','Unit 9 The natural world','Unit 10 Reaching for the skies','Test Two',
+                    'Unit 11 Design and innovation','Unit 12 Information technology','Unit 13 The modern world','Unit 14 Urbanisation','Unit 15 The green revolution','Test Three',
+                    'Unit 16 The energy crisis','Unit 17 Talking business','Unit 18 The law','Unit 19 The media','Unit 20 The arts','Test Four',
+                    'Unit 21 Language building 1','Unit 22 Language building 2','Unit 23 Academic Writing Task 1','Unit 24 Academic Writing Task 2','Unit 25 General Training Writing Tasks 1 and 2','Test Five'
+                ]
+            },
+            
+            // ===== ДОПОЛНИТЕЛЬНЫЕ =====
+            {
+                id: 'ege', category: 'extra', name: 'ЕГЭ (устные темы)',
+                topics: [
+                    'Family life and everyday duties',
+                    'Shopping as a duty and a pleasure',
+                    'Urban and rural life. Housing',
+                    'Interpersonal communication in a family. Family traditions',
+                    'Interpersonal communication (between friends and acquaintances)',
+                    'Health and healthcare',
+                    'A healthy lifestyle',
+                    'Youth in the modern world: its role and problems',
+                    'Youth pastime',
+                    'The USA: geographical position, natural resources, population',
+                    'Great Britain: geographical position, natural resources, population',
+                    'The USA: places of interest',
+                    'Great Britain: places of interest',
+                    'Tourism and ecotourism. Transport',
+                    'Travelling abroad: English-speaking countries',
+                    'Home journey: Russian places tour',
+                    'Nature and ecology',
+                    'Russian cultural and historical peculiarities',
+                    'American history and culture',
+                    'British history and culture',
+                    'Contribution of Russia to science and culture development',
+                    'Contribution of English-speaking countries to science and culture development',
+                    'The world of professions and the world of work',
+                    'Higher education in Russia and problems students face while studying',
+                    'Higher education abroad and problems students face while studying',
+                    'Plans for future and choosing a career',
+                    'The world of languages and their role in our life',
+                    'Studying at school: subjects and our attitude to them',
+                    'Scientific-and-technological advance',
+                    'Old informational technologies versus new ones',
+                    'Holidays and remarkable days in Russia',
+                    'Holidays and remarkable days in the USA',
+                    'Holidays and remarkable days in Great Britain',
+                    '4.1.–4.2. Curriculum Vitae / Resume. Filling in a form',
+                    '4.3.–4.4. Writing a private and an official letter',
+                    '4.5. – 4.6. Making plans, thesis. Describing events, expressing your opinion'
+                ]
+            }
+        ];
+    </script>
+    <!-- ============================================ -->
+    <!-- ===== ЛОГИКА ПРИЛОЖЕНИЯ ====== -->
+    <!-- ============================================ -->
+    <script>
+        // ===== STATE =====
+        let totalGold = 0, todayGold = 0, streak = 0, bestStreak = 0, totalQuests = 0;
+        let questCounts = {}, bookProgress = {}, lastDate = '';
+        let goalName = 'Jewelry Findings', goalAmount = 2000;
+        let currentTab = 'home';
+        let openBooks = {}; // Какие учебники раскрыты
+        let openSections = {}; // Какие секции раскрыты
+
+        const quests = [
+            { id: 'lesson', label: 'Complete a unit in a textbook', gold: 20 },
+            { id: 'vocab10', label: 'Learn 10+ new words', gold: 15 },
+            { id: 'review', label: 'Review words (any app)', gold: 10 },
+            { id: 'listening', label: 'Listening 15+ min', gold: 10 },
+            { id: 'reading', label: 'Reading in English', gold: 15 },
+            { id: 'essay', label: 'Write an essay', gold: 30 },
+            { id: 'wordfall', label: 'Play Word Splash', gold: 5 },
+        ];
+
+        const LEVELS = [
+            { name: 'Apprentice', min: 0 }, { name: 'Scholar', min: 200 }, { name: 'Sage', min: 500 },
+            { name: 'Archmage', min: 1000 }, { name: 'Legend', min: 2000 },
+        ];
+
+        // ===== STORAGE =====
+        function save() {
+            localStorage.setItem('studyquest_v2', JSON.stringify({
+                totalGold, todayGold, streak, bestStreak, totalQuests, questCounts,
+                bookProgress, lastDate, goalName, goalAmount
+            }));
+        }
+        function load() {
+            const raw = localStorage.getItem('studyquest_v2') || localStorage.getItem('studyquest');
+            if (raw) {
+                try {
+                    const d = JSON.parse(raw);
+                    totalGold = d.totalGold || 0; todayGold = d.todayGold || 0;
+                    streak = d.streak || 0; bestStreak = d.bestStreak || 0;
+                    totalQuests = d.totalQuests || 0; questCounts = d.questCounts || {};
+                    bookProgress = d.bookProgress || {}; lastDate = d.lastDate || '';
+                    goalName = d.goalName || 'Jewelry Findings'; goalAmount = d.goalAmount || 2000;
+                } catch(e) {}
+            }
+        }
+        load();
+
+        // ===== DAY RESET =====
+        const today = new Date().toDateString();
+        if (lastDate !== today) {
+            if (lastDate === new Date(new Date().setDate(new Date().getDate()-1)).toDateString()) streak++;
+            else if (lastDate !== '') streak = 0;
+            if (streak > bestStreak) bestStreak = streak;
+            todayGold = 0; questCounts = {}; lastDate = today; save();
+        }
+
+        // ===== HELPERS =====
+        function getLevel() {
+            for (let i = LEVELS.length-1; i >= 0; i--) if (totalGold >= LEVELS[i].min) return LEVELS[i].name;
+            return LEVELS[0].name;
+        }
+
+        // Подсчёт прогресса книги
+        function countBookDone(book) {
+            const prog = bookProgress[book.id] || {};
+            if (book.sections) {
+                // Книга с секциями
+                let done = 0, total = 0;
+                for (let si = 0; si < book.sections.length; si++) {
+                    const sec = book.sections[si];
+                    for (let ti = 0; ti < sec.topics.length; ti++) {
+                        total++;
+                        if (prog[si + '_' + ti]) done++;
+                    }
+                }
+                return { done, total };
+            } else {
+                // Плоский список
+                const total = book.topics.length;
+                let done = 0;
+                for (let i = 0; i < total; i++) if (prog[i]) done++;
+                return { done, total };
+            }
+        }
+
+        function getTotalProgress() {
+            let done = 0, total = 0;
+            for (const book of booksData) {
+                const p = countBookDone(book);
+                done += p.done;
+                total += p.total;
+            }
+            return { done, total, percent: total > 0 ? Math.round((done/total)*100) : 0 };
+        }
+
+        function getCategoryProgress(cat) {
+            let done = 0, total = 0;
+            for (const book of booksData) {
+                if (book.category !== cat) continue;
+                const p = countBookDone(book);
+                done += p.done;
+                total += p.total;
+            }
+            return { done, total, percent: total > 0 ? Math.round((done/total)*100) : 0 };
+        }
+
+        // ===== РЕНДЕР =====
+        function render() {
+            // B1 бар
+            const tp = getTotalProgress();
+            document.getElementById('b1-bar').style.width = tp.percent + '%';
+            document.getElementById('b1-percent').textContent = 
+                tp.percent + '% (' + tp.done + '/' + tp.total + ')';
+
+            // Табы
+            document.querySelectorAll('.tab').forEach(t => {
+                t.classList.toggle('active', t.dataset.tab === currentTab);
+            });
+
+            const content = document.getElementById('content');
+
+            if (currentTab === 'home') {
+                renderHome(content);
+            } else if (currentTab === 'stats') {
+                renderStats(content);
+            } else {
+                renderCategory(content, currentTab);
+            }
+        }
+
+        function renderHome(content) {
+            content.innerHTML = `
+                <div class="goal-section">
+                    <div class="section-title">🎯 Goal: <span id="goal-name">${goalName}</span></div>
+                    <div class="goal-bar-bg"><div class="goal-bar-fill" id="goal-bar" style="width:0%"></div></div>
+                    <div class="goal-stats">
+                        <span id="goal-current">${totalGold}g</span>
+                        <span id="goal-target">${goalAmount}g</span>
+                    </div>
+                    <div class="goal-edit-btn" onclick="openGoalEditor()">✏️ Edit goal</div>
+                </div>
+                <div class="goal-section">
+                    <div class="section-title">⚔️ Daily Quests</div>
+                    <div class="streak-badge" id="streak-emoji">🔥</div>
+                    <div class="streak-number" id="streak-num">${streak} days</div>
+                    <div id="quests-list"></div>
+                    <div class="quests-total">Today: ${todayGold}g</div>
+                </div>
+            `;
+
+            const pct = Math.min(100, Math.round((totalGold / goalAmount) * 100));
+            document.getElementById('goal-bar').style.width = pct + '%';
+
+            // Quests
+            const ql = document.getElementById('quests-list');
+            for (const q of quests) {
+                const count = questCounts[q.id] || 0;
+                const item = document.createElement('div');
+                item.className = 'quest-item';
+                item.innerHTML = `<span>🔄 ${q.label}${count > 0 ? `<span class="quest-count">×${count}</span>` : ''}</span><span class="quest-gold">+${q.gold}g</span>`;
+                item.onclick = () => {
+                    questCounts[q.id] = (questCounts[q.id] || 0) + 1;
+                    todayGold += q.gold; totalGold += q.gold; totalQuests++; save(); render();
+                };
+                ql.appendChild(item);
+            }
+
+            document.getElementById('streak-emoji').textContent = streak >= 7 ? '🔥🔥🔥' : streak >= 3 ? '🔥🔥' : streak > 0 ? '🔥' : '💤';
+        }
+
+        function renderCategory(content, cat) {
+            const catNames = { main: '📘 Основные', grammar: '📗 Грамматика', vocab: '📙 Лексика', extra: '📕 Дополнительные' };
+            const cp = getCategoryProgress(cat);
+            const books = booksData.filter(b => b.category === cat);
+
+            content.innerHTML = `
+                <div class="category-title">
+                    <span>${catNames[cat]}</span>
+                    <span class="category-percent">${cp.percent}% (${cp.done}/${cp.total})</span>
+                </div>
+                <div id="books-list"></div>
+            `;
+
+            const bl = document.getElementById('books-list');
+            if (books.length === 0) {
+                bl.innerHTML = '<div class="empty-state">Нет учебников в этой категории</div>';
+                return;
+            }
+
+            for (const book of books) {
+                bl.appendChild(renderBookCard(book));
+            }
+        }
+
+        function renderBookCard(book) {
+            const p = countBookDone(book);
+            const pct = p.total > 0 ? Math.round((p.done / p.total) * 100) : 0;
+            const isOpen = openBooks[book.id];
+
+            const card = document.createElement('div');
+            card.className = 'book-card';
+
+            const header = document.createElement('div');
+            header.className = 'book-header';
+            header.innerHTML = `
+                <div class="book-header-main">
+                    <span class="book-arrow ${isOpen ? 'open' : ''}">▶</span>
+                    <span class="book-name">${book.name}</span>
+                </div>
+                <span class="book-stats">${p.done}/${p.total}</span>
+                <span class="book-percent">${pct}%</span>
+            `;
+            header.onclick = () => {
+                openBooks[book.id] = !openBooks[book.id];
+                render();
+            };
+            card.appendChild(header);
+
+            const body = document.createElement('div');
+            body.className = 'book-body' + (isOpen ? ' open' : '');
+
+            if (book.sections) {
+                // Книга с секциями
+                for (let si = 0; si < book.sections.length; si++) {
+                    body.appendChild(renderSection(book, si));
+                }
+            } else {
+                // Плоский список
+                for (let ti = 0; ti < book.topics.length; ti++) {
+                    body.appendChild(renderTopic(book, ti));
+                }
+            }
+
+            card.appendChild(body);
+            return card;
+        }
+
+        function renderSection(book, si) {
+            const sec = book.sections[si];
+            const secId = book.id + '_s' + si;
+            const isOpen = openSections[secId];
+
+            let done = 0;
+            for (let ti = 0; ti < sec.topics.length; ti++) {
+                if (bookProgress[book.id] && bookProgress[book.id][si + '_' + ti]) done++;
+            }
+            const total = sec.topics.length;
+            const allDone = done === total;
+            const partial = done > 0 && done < total;
+
+            const wrap = document.createElement('div');
+            wrap.className = 'section-item';
+
+            const header = document.createElement('div');
+            header.className = 'section-header';
+            header.innerHTML = `
+                <span class="section-arrow ${isOpen ? 'open' : ''}">▶</span>
+                <div class="section-checkbox ${allDone ? 'checked' : partial ? 'partial' : ''}" 
+                     onclick="event.stopPropagation(); toggleSection('${book.id}', ${si});">
+                    ${allDone ? '✓' : partial ? '−' : ''}
+                </div>
+                <span class="section-name">${sec.name}</span>
+                <span class="section-progress">${done}/${total}</span>
+            `;
+            header.onclick = (e) => {
+                if (e.target.classList.contains('section-checkbox')) return;
+                openSections[secId] = !openSections[secId];
+                render();
+            };
+            wrap.appendChild(header);
+
+            const subList = document.createElement('div');
+            subList.className = 'subtopics-list' + (isOpen ? ' open' : '');
+            for (let ti = 0; ti < sec.topics.length; ti++) {
+                const t = sec.topics[ti];
+                const checked = bookProgress[book.id] && bookProgress[book.id][si + '_' + ti];
+                const item = document.createElement('div');
+                item.className = 'subtopic-item' + (checked ? ' completed' : '');
+                item.innerHTML = `
+                    <div class="subtopic-checkbox ${checked ? 'checked' : ''}">${checked ? '✓' : ''}</div>
+                    <span class="subtopic-name">${t}</span>
+                `;
+                item.onclick = () => toggleSub('${book.id}', si, ti);
+                subList.appendChild(item);
+            }
+            wrap.appendChild(subList);
+            return wrap;
+        }
+
+        function renderTopic(book, ti) {
+            const checked = bookProgress[book.id] && bookProgress[book.id][ti];
+            const item = document.createElement('div');
+            item.className = 'topic-item' + (checked ? ' completed' : '');
+            item.innerHTML = `
+                <div class="topic-checkbox ${checked ? 'checked' : ''}">${checked ? '✓' : ''}</div>
+                <span class="topic-name">${book.topics[ti]}</span>
+            `;
+            item.onclick = () => toggleTopic(book.id, ti);
+            return item;
+        }
+
+        function renderStats(content) {
+            const tp = getTotalProgress();
+            content.innerHTML = `
+                <div class="goal-section">
+                    <div class="section-title">📊 Overview</div>
+                    <div class="stat-row"><span>Total Gold</span><span class="stat-value">${totalGold}g</span></div>
+                    <div class="stat-row"><span>Best Streak</span><span class="stat-value">${bestStreak} days</span></div>
+                    <div class="stat-row"><span>Current Streak</span><span class="stat-value">${streak} days</span></div>
+                    <div class="stat-row"><span>Quests Completed</span><span class="stat-value">${totalQuests}</span></div>
+                </div>
+                <div class="goal-section">
+                    <div class="section-title">📚 B1 Level</div>
+                    <div class="stat-row"><span>Total Topics</span><span class="stat-value">${tp.total}</span></div>
+                    <div class="stat-row"><span>Completed</span><span class="stat-value">${tp.done}</span></div>
+                    <div class="stat-row"><span>Remaining</span><span class="stat-value">${tp.total - tp.done}</span></div>
+                    <div class="stat-row"><span>Progress</span><span class="stat-value">${tp.percent}%</span></div>
+                </div>
+            `;
+        }
+
+        // ===== ACTIONS =====
+        function toggleTopic(bookId, ti) {
+            if (!bookProgress[bookId]) bookProgress[bookId] = {};
+            bookProgress[bookId][ti] = !bookProgress[bookId][ti];
+            save(); render();
+        }
+
+        function toggleSub(bookId, si, ti) {
+            if (!bookProgress[bookId]) bookProgress[bookId] = {};
+            const key = si + '_' + ti;
+            bookProgress[bookId][key] = !bookProgress[bookId][key];
+            save(); render();
+        }
+
+        function toggleSection(bookId, si) {
+            const book = booksData.find(b => b.id === bookId);
+            if (!book) return;
+            const sec = book.sections[si];
+            if (!bookProgress[bookId]) bookProgress[bookId] = {};
+            // Проверяем, все ли отмечены
+            let allDone = true;
+            for (let ti = 0; ti < sec.topics.length; ti++) {
+                if (!bookProgress[bookId][si + '_' + ti]) { allDone = false; break; }
+            }
+            // Если все отмечены — снимаем все, иначе — ставим все
+            for (let ti = 0; ti < sec.topics.length; ti++) {
+                bookProgress[bookId][si + '_' + ti] = !allDone;
+            }
+            save(); render();
+        }
+
+        function openGoalEditor() {
+            document.getElementById('goal-name-input').value = goalName;
+            document.getElementById('goal-amount-input').value = goalAmount;
+            document.getElementById('goal-modal').classList.add('show');
+        }
+        function saveGoal() {
+            const name = document.getElementById('goal-name-input').value.trim();
+            const amount = parseInt(document.getElementById('goal-amount-input').value);
+            if (name) goalName = name;
+            if (amount > 0) goalAmount = amount;
+            save(); render();
+            document.getElementById('goal-modal').classList.remove('show');
+        }
+
+        // ===== TABS =====
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.onclick = () => {
+                currentTab = tab.dataset.tab;
+                render();
+            };
+        });
+
+        // ===== START =====
+        render();
+    </script>
+</body>
+</html>
